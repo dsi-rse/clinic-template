@@ -1,0 +1,5 @@
+.DS_Store
+/plans
+
+# dashboard data
+dashboard/public/data/*

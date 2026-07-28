@@ -9,6 +9,7 @@ use_local_data_dir = "{{ cookiecutter.data_dir }}" in ["local", "github"]
 examples = "{{ cookiecutter.examples }}"
 keep_bsd3 = f"{{ cookiecutter.bsd }}" == "yes"
 use_annotations = f"{{ cookiecutter.ann }}" == "yes"
+use_dashboard = "{{ cookiecutter.dashboard }}" == "yes"
 
 if not use_cluster:
     shutil.rmtree("config")
@@ -58,3 +59,26 @@ if not use_annotations:
         new_text_lines.append(line)
     with open("pyproject.toml", "w") as f:
         f.writelines(new_text_lines)
+
+if not use_dashboard:
+    shutil.rmtree("dashboard")
+    workflow = ".github/workflows/dashboard.workflow.yml"
+    if os.path.exists(workflow):
+        os.remove(workflow)
+    export_py = "src/{{ cookiecutter.code_directory }}/dashboard_export.py"
+    if os.path.exists(export_py):
+        os.remove(export_py)
+else:
+    # Replace __PROJECT_NAME__ token in unrendered files
+    project_name = "{{ cookiecutter.project_name }}"
+    token_files = [
+        "dashboard/index.html",
+        "dashboard/README.md",
+    ]
+    for path in token_files:
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                content = f.read()
+            content = content.replace("__PROJECT_NAME__", project_name)
+            with open(path, "w") as f:
+                f.write(content)

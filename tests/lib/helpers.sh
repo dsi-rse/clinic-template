@@ -178,6 +178,98 @@ print('   ✓ all data-science example modules imported successfully')
 "
 }
 
+test_dashboard() {
+    local project_dir="$1"
+    local project_name="$2"
+    local project_slug="$3"
+    local module_name="$4"
+    echo "   Testing dashboard scaffold..."
+    cd "$project_dir"
+
+    echo "   Checking expected files are present..."
+    local expected_files=(
+        "dashboard/index.html"
+        "dashboard/README.md"
+        "dashboard/TUTORIAL.md"
+        "dashboard/AGENTS.md"
+        "dashboard/CLAUDE.md"
+        "dashboard/.gitignore"
+        "dashboard/package.json"
+        "dashboard/package-lock.json"
+        "dashboard/vite.config.ts"
+        "dashboard/tsconfig.json"
+        "dashboard/data.manifest.json"
+        "dashboard/public/_redirects"
+        "dashboard/public/data/demo.parquet"
+        "dashboard/data/dictionary/demo.json"
+        "dashboard/data/dictionary/demo.md"
+        "dashboard/scripts/pull_data.py"
+        "dashboard/src/main.tsx"
+        "dashboard/src/App.tsx"
+        "dashboard/src/store/filters.ts"
+        "dashboard/src/lib/duckdb.ts"
+        "dashboard/src/lib/useQuery.ts"
+        "dashboard/src/components/PlotFigure.tsx"
+        "dashboard/src/pages/OverviewPage.tsx"
+        "dashboard/src/pages/MapPage.tsx"
+        "dashboard/e2e/smoke.spec.ts"
+        "dashboard/playwright.config.ts"
+        ".github/workflows/dashboard.workflow.yml"
+        "src/$module_name/dashboard_export.py"
+    )
+    for f in "${expected_files[@]}"; do
+        if [ ! -f "$f" ]; then
+            echo "   ✗ Expected file not found: $f"
+            return 1
+        fi
+    done
+    echo "   ✓ All expected dashboard files present"
+
+    echo "   Checking for no leaked Jinja in dashboard/..."
+    if grep -rl "{{ cookiecutter" dashboard/ 2>/dev/null | grep -q .; then
+        echo "   ✗ Found leaked {{ cookiecutter }} in dashboard/"
+        grep -rl "{{ cookiecutter" dashboard/
+        return 1
+    fi
+    if grep -rl "{%" dashboard/ 2>/dev/null | grep -q .; then
+        echo "   ✗ Found leaked {%...%} in dashboard/"
+        grep -rl "{%" dashboard/
+        return 1
+    fi
+    echo "   ✓ No Jinja leaked into dashboard/"
+
+    echo "   Checking __PROJECT_NAME__ token replacement..."
+    for f in "dashboard/index.html" "dashboard/README.md"; do
+        if grep -q "__PROJECT_NAME__" "$f"; then
+            echo "   ✗ __PROJECT_NAME__ token not replaced in $f"
+            return 1
+        fi
+        if ! grep -q "$project_name" "$f"; then
+            echo "   ✗ Project name not found in $f"
+            return 1
+        fi
+    done
+    echo "   ✓ __PROJECT_NAME__ replaced with project name"
+
+    echo "   Checking JSON files are valid..."
+    python3 -m json.tool dashboard/package.json > /dev/null
+    python3 -m json.tool dashboard/package-lock.json > /dev/null
+    python3 -m json.tool dashboard/data.manifest.json > /dev/null
+    python3 -m json.tool dashboard/data/dictionary/demo.json > /dev/null
+    echo "   ✓ package.json, package-lock.json, data.manifest.json, demo.json valid"
+
+    echo "   Checking workflow contains project slug..."
+    if ! grep -q "$project_slug" .github/workflows/dashboard.workflow.yml; then
+        echo "   ✗ Project slug not found in dashboard workflow"
+        return 1
+    fi
+    echo "   ✓ Workflow contains project slug"
+
+    echo "   Building dashboard in Docker (npm ci && npm run build)..."
+    docker compose run --rm dashboard sh -c "npm ci && npm run build"
+    echo "   ✓ Dashboard builds (tsc + vite) in node:22-slim"
+}
+
 test_precommit() {
     local project_dir="$1"
     local service_name="$2"

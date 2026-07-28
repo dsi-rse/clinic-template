@@ -8,6 +8,7 @@
     "examples": ["no", "generic", "data-science"],
     "bsd": ["yes", "no"],
     "ann": ["yes", "no"],
+    "dashboard": ["no", "yes"],
     "__prompts__": {
         "project_name": "What is the name of this project? (This will be used as the project name in the README, etc)",
         "project_slug": "Name the project root directory. (This will be used as the project folder)",
@@ -28,6 +29,8 @@
             "data-science": "Data science scaffold (inference strategies, evaluation framework, CLI)"
         },
         "bsd": "Would you like to use DSI's default license (BSD-3)?",
-        "ann": "Would you like to require type annotations in ruff?"
-    }
+        "ann": "Would you like to require type annotations in ruff?",
+        "dashboard": "Would you like to include an optional Vite/React dashboard scaffold? (Static parquet + DuckDB-wasm, no backend)"
+    },
+    "_copy_without_render": ["dashboard"]
 }

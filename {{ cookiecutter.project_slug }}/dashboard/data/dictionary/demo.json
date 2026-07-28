@@ -1,0 +1,104 @@
+{
+  "row_count": 1500,
+  "columns": {
+    "id": {
+      "dtype": "int32",
+      "nulls": 0,
+      "n_unique": 1500,
+      "min": 0.0,
+      "max": 1499.0,
+      "samples": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "date": {
+      "dtype": "object",
+      "nulls": 0,
+      "n_unique": 359,
+      "min": "2025-07-01",
+      "max": "2026-06-30",
+      "samples": [
+        "2025-09-23",
+        "2026-04-01",
+        "2026-03-31",
+        "2025-09-21",
+        "2026-03-11"
+      ]
+    },
+    "city": {
+      "dtype": "str",
+      "nulls": 0,
+      "n_unique": 5,
+      "min": "Chicago",
+      "max": "Phoenix",
+      "samples": [
+        "Phoenix",
+        "Houston",
+        "Los Angeles",
+        "New York",
+        "New York"
+      ]
+    },
+    "lat": {
+      "dtype": "float64",
+      "nulls": 0,
+      "n_unique": 5,
+      "min": 29.76,
+      "max": 41.85,
+      "samples": [
+        33.45,
+        29.76,
+        34.05,
+        40.71,
+        40.71
+      ]
+    },
+    "lon": {
+      "dtype": "float64",
+      "nulls": 0,
+      "n_unique": 5,
+      "min": -118.24,
+      "max": -73.94,
+      "samples": [
+        -112.07,
+        -95.37,
+        -118.24,
+        -73.94,
+        -73.94
+      ]
+    },
+    "category": {
+      "dtype": "str",
+      "nulls": 0,
+      "n_unique": 4,
+      "min": "A",
+      "max": "D",
+      "samples": [
+        "A",
+        "A",
+        "B",
+        "C",
+        "C"
+      ]
+    },
+    "value": {
+      "dtype": "float64",
+      "nulls": 0,
+      "n_unique": 1500,
+      "min": -3.011450075362948,
+      "max": 2.972574292632735,
+      "samples": [
+        -0.8771032876958236,
+        1.0601722006090062,
+        0.2130089000439987,
+        2.0063779933758443,
+        0.7253370628882799
+      ]
+    }
+  },
+  "name": "demo"
+}

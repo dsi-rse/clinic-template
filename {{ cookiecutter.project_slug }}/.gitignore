@@ -47,7 +47,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
 parts/
 sdist/
@@ -141,5 +141,8 @@ venv.bak/
 
 {% if cookiecutter.data_dir == 'local' %}
 # data directory
-data/
+/data/
 {% endif %}
+
+# dashboard data
+dashboard/public/data/*
