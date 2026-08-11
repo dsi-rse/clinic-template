@@ -1,5 +1,7 @@
 services:
   {{ cookiecutter.project_slug }}:
+    # Docker image references must be lowercase; the slug can contain uppercase
+    image: {{ cookiecutter.project_slug|lower }}
     build:
       context: .
       dockerfile: Dockerfile
