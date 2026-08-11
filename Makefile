@@ -1,6 +1,6 @@
 # Makefile for clinic-template development
 
-.PHONY: test test-basic test-local-data test-cluster test-precommit test-examples-data-science clean help
+.PHONY: test test-basic test-local-data test-cluster test-precommit test-examples-data-science test-uppercase-slug clean help
 
 help:
 	@echo "Available targets:"
@@ -10,11 +10,12 @@ help:
 	@echo "  test-cluster    - Test cluster configuration"
 	@echo "  test-precommit  - Test pre-commit hooks"
 	@echo "  test-examples-data-science - Test data-science examples scaffold"
+	@echo "  test-uppercase-slug - Test docker image name is lowercase for uppercase slugs"
 	@echo "  clean           - Remove test artifacts"
 	@echo "  help            - Show this help message"
 
 # Run all tests
-test: test-basic test-local-data test-cluster test-precommit test-examples-data-science
+test: test-basic test-local-data test-cluster test-precommit test-examples-data-science test-uppercase-slug
 	@echo ""
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "ALL TESTS PASSED"
@@ -40,6 +41,10 @@ test-precommit:
 test-examples-data-science:
 	@chmod +x tests/scenarios/test_examples_data_science.sh
 	@./tests/scenarios/test_examples_data_science.sh
+
+test-uppercase-slug:
+	@chmod +x tests/scenarios/test_uppercase_slug.sh
+	@./tests/scenarios/test_uppercase_slug.sh
 
 # Clean up test artifacts
 clean:
