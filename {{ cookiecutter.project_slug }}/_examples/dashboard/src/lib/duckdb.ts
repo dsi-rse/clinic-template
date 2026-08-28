@@ -1,28 +1,20 @@
 import * as duckdb from '@duckdb/duckdb-wasm'
-import duckdb_wasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url'
-import mvp_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url'
-import duckdb_wasm_eh from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url'
-import eh_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url'
 import manifest from '../../data.manifest.json'
-
-const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
-  mvp: {
-    mainModule: duckdb_wasm,
-    mainWorker: mvp_worker,
-  },
-  eh: {
-    mainModule: duckdb_wasm_eh,
-    mainWorker: eh_worker,
-  },
-}
 
 let dbPromise: Promise<duckdb.AsyncDuckDB> | null = null
 
 function getDB(): Promise<duckdb.AsyncDuckDB> {
   if (!dbPromise) {
     dbPromise = (async () => {
-      const bundle = await duckdb.selectBundle(MANUAL_BUNDLES)
-      const worker = new Worker(bundle.mainWorker!)
+      // Load the wasm bundles from jsDelivr rather than bundling them:
+      // they are >25 MiB each, which exceeds Cloudflare Pages' per-file limit.
+      const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles())
+      // Same-origin blob wrapper so the cross-origin worker script can load.
+      const workerUrl = URL.createObjectURL(
+        new Blob([`importScripts("${bundle.mainWorker!}");`], { type: 'text/javascript' }),
+      )
+      const worker = new Worker(workerUrl)
+      URL.revokeObjectURL(workerUrl)
       const logger = new duckdb.ConsoleLogger()
       const db = new duckdb.AsyncDuckDB(logger, worker)
       await db.instantiate(bundle.mainModule)
@@ -30,8 +22,9 @@ function getDB(): Promise<duckdb.AsyncDuckDB> {
       const conn = await db.connect()
 
       // Every manifest entry becomes a view named by its parquet file stem,
-      // served from public/data/.
-      const base = import.meta.env.BASE_URL
+      // served from public/data/. URLs must be absolute: the DB runs in a
+      // blob-wrapped worker that can't resolve relative paths.
+      const base = new URL(import.meta.env.BASE_URL, window.location.href).href
       const names = new Set<string>(manifest.map((entry) => entry.name))
       for (const name of names) {
         const filename = `${name}.parquet`
