@@ -26,10 +26,11 @@ make dashboard-dev
 ```
 
 Open http://localhost:5173.  You should see a dashboard with global controls
-(a request-type picker and a year-range slider) and two tabs: **Trends**
-(stat tiles plus trend and breakdown charts) and **Map** (a choropleth of
-requests per community area).  Everything queries the parquet files that
-`make dashboard-data` just placed in `public/data/`.
+(a request-type picker and a year-range slider) and three tabs: **Trends**
+(stat tiles plus trend and breakdown charts), **Map** (a choropleth of
+requests per community area), and **SQL** (a live query console).  Everything
+queries the parquet files that `make dashboard-data` just placed in
+`public/data/`.
 
 > **Troubleshooting.** If `make dashboard-dev` errors with "Docker not found",
 > make sure Docker Desktop is running. If Node is not installed locally but
@@ -255,8 +256,9 @@ The deploy step is skipped on pull requests — PRs only build and test.
 
 ## What to Do Next
 
-- **Explore the 311 data.** Open a browser console, set a breakpoint, or add
-  a `console.log(data)` after `useQuery` to inspect the rows your SQL returns.
+- **Explore the 311 data.** Use the **SQL** tab to run queries live against
+  the parquet views — it is the fastest way to prototype the SQL for a new
+  chart before writing any code.
 - **Export your first real dataset.** Run `dashboard_export.py` on a DataFrame
   from your pipeline and add it to the manifest.
 - **Hand a tab to an LLM.** Follow Step 5 with your real data dictionary and

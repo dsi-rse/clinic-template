@@ -47,7 +47,8 @@ dashboard/
 │   │   └── Card.tsx              # Bordered dashboard card (figure + figcaption)
 │   └── pages/
 │       ├── OverviewPage.tsx      # Trends tab: stat tiles + 4 Plot charts
-│       └── MapPage.tsx           # Map tab: choropleth + legend + ranking
+│       ├── MapPage.tsx           # Map tab: choropleth + legend + ranking
+│       └── SqlPage.tsx           # SQL tab: live query console + results table
 ├── data/dictionary/              # Committed schema JSON + MD (LLM-ingestible)
 ├── data.manifest.json            # Box URLs for remote datasets
 ├── public/data/                  # Local parquet (pulled from Box; git-ignored)

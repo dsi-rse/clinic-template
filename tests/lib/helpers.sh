@@ -215,6 +215,7 @@ test_dashboard() {
         "dashboard/src/components/Card.tsx"
         "dashboard/src/pages/OverviewPage.tsx"
         "dashboard/src/pages/MapPage.tsx"
+        "dashboard/src/pages/SqlPage.tsx"
         "dashboard/e2e/smoke.spec.ts"
         "dashboard/playwright.config.ts"
         ".github/workflows/dashboard.workflow.yml"

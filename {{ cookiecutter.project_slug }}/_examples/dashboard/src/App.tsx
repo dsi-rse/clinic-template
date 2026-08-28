@@ -1,6 +1,7 @@
 import { Item, Picker, RangeSlider, TabList, TabPanels, Tabs } from '@adobe/react-spectrum'
 import OverviewPage from './pages/OverviewPage'
 import MapPage from './pages/MapPage'
+import SqlPage from './pages/SqlPage'
 import { useQuery } from './lib/useQuery'
 import { useFilters, DATA_YEARS } from './store/filters'
 
@@ -61,6 +62,7 @@ export default function App() {
         <TabList>
           <Item key="trends">Trends</Item>
           <Item key="map">Map</Item>
+          <Item key="sql">SQL</Item>
         </TabList>
         <TabPanels>
           <Item key="trends">
@@ -68,6 +70,9 @@ export default function App() {
           </Item>
           <Item key="map">
             <MapPage />
+          </Item>
+          <Item key="sql">
+            <SqlPage />
           </Item>
         </TabPanels>
       </Tabs>
