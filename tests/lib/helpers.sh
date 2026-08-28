@@ -200,16 +200,19 @@ test_dashboard() {
         "dashboard/tsconfig.json"
         "dashboard/data.manifest.json"
         "dashboard/public/_redirects"
-        "dashboard/public/data/demo.parquet"
-        "dashboard/data/dictionary/demo.json"
-        "dashboard/data/dictionary/demo.md"
+        "dashboard/data/dictionary/reqs_311.json"
+        "dashboard/data/dictionary/reqs_311.md"
+        "dashboard/data/dictionary/community_areas.json"
+        "dashboard/data/dictionary/community_areas.md"
         "dashboard/scripts/pull_data.py"
+        "dashboard/scripts/make_sample_geodata.py"
         "dashboard/src/main.tsx"
         "dashboard/src/App.tsx"
         "dashboard/src/store/filters.ts"
         "dashboard/src/lib/duckdb.ts"
         "dashboard/src/lib/useQuery.ts"
         "dashboard/src/components/PlotFigure.tsx"
+        "dashboard/src/components/Card.tsx"
         "dashboard/src/pages/OverviewPage.tsx"
         "dashboard/src/pages/MapPage.tsx"
         "dashboard/e2e/smoke.spec.ts"
@@ -255,8 +258,9 @@ test_dashboard() {
     python3 -m json.tool dashboard/package.json > /dev/null
     python3 -m json.tool dashboard/package-lock.json > /dev/null
     python3 -m json.tool dashboard/data.manifest.json > /dev/null
-    python3 -m json.tool dashboard/data/dictionary/demo.json > /dev/null
-    echo "   ✓ package.json, package-lock.json, data.manifest.json, demo.json valid"
+    python3 -m json.tool dashboard/data/dictionary/reqs_311.json > /dev/null
+    python3 -m json.tool dashboard/data/dictionary/community_areas.json > /dev/null
+    echo "   ✓ package.json, package-lock.json, data.manifest.json, dictionaries valid"
 
     echo "   Checking workflow contains project slug..."
     if ! grep -q "$project_slug" .github/workflows/dashboard.workflow.yml; then

@@ -2,7 +2,6 @@ node_modules/
 dist/
 public/data/*.parquet
 public/data/*.parquet.tmp
-!public/data/demo.parquet
 .env
 playwright-report/
 test-results/

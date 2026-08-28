@@ -1,0 +1,119 @@
+{
+  "name": "reqs_311",
+  "description": "Toy sample of Chicago 311 service requests (Chicago Data Portal via the Kaggle 311 archive): 12 request types, 50% random sample, 2011 onward, duplicate-flagged rows removed. `community_area` joins to community_areas.area_num. `status` is NULL for vacant-building reports (that dataset has no status column).",
+  "row_count": 1605643,
+  "columns": {
+    "creation_date": {
+      "dtype": "datetime64[us]",
+      "nulls": 0,
+      "n_unique": 3261,
+      "min": "2011-01-01 00:00:00",
+      "max": "2019-12-05 00:00:00",
+      "samples": [
+        "2015-09-24 00:00:00",
+        "2018-08-31 00:00:00",
+        "2012-01-26 00:00:00",
+        "2011-04-05 00:00:00",
+        "2014-05-22 00:00:00"
+      ]
+    },
+    "status": {
+      "dtype": "object",
+      "nulls": 29118,
+      "n_unique": 2,
+      "min": "Completed",
+      "max": "Open",
+      "samples": [
+        "Completed",
+        "Completed",
+        "Completed",
+        "Completed",
+        "Completed"
+      ]
+    },
+    "completion_date": {
+      "dtype": "datetime64[us]",
+      "nulls": 41191,
+      "n_unique": 3126,
+      "min": "2011-01-01 00:00:00",
+      "max": "2019-12-05 00:00:00",
+      "samples": [
+        "2015-10-22 00:00:00",
+        "2018-08-31 00:00:00",
+        "2012-01-26 00:00:00",
+        "2011-04-15 00:00:00",
+        "2014-05-22 00:00:00"
+      ]
+    },
+    "service_request_number": {
+      "dtype": "str",
+      "nulls": 0,
+      "n_unique": 1594618,
+      "min": "11-00000212",
+      "max": "19-00169287",
+      "samples": [
+        "15-05033236",
+        "18-02537719",
+        "12-00116544",
+        "11-00630606",
+        "14-00765327"
+      ]
+    },
+    "type_of_service_request": {
+      "dtype": "str",
+      "nulls": 0,
+      "n_unique": 13,
+      "min": "Abandoned Vehicle Complaint",
+      "max": "Vacant/Abandoned Building",
+      "samples": [
+        "Rodent Baiting/Rat Complaint",
+        "Sanitation Code Violation",
+        "Tree Trim",
+        "Pothole in Street",
+        "Tree Trim"
+      ]
+    },
+    "community_area": {
+      "dtype": "int64",
+      "nulls": 0,
+      "n_unique": 77,
+      "min": "1",
+      "max": "77",
+      "samples": [
+        "19",
+        "6",
+        "17",
+        "63",
+        "71"
+      ]
+    },
+    "latitude": {
+      "dtype": "float64",
+      "nulls": 1119,
+      "n_unique": 790693,
+      "min": "0.0",
+      "max": "42.02296045252183",
+      "samples": [
+        "41.93399493553111",
+        "41.94225995167597",
+        "41.94174478009426",
+        "41.79118757971278",
+        "41.74851155933513"
+      ]
+    },
+    "longitude": {
+      "dtype": "float64",
+      "nulls": 1119,
+      "n_unique": 790693,
+      "min": "-87.93520003121188",
+      "max": "0.0",
+      "samples": [
+        "-87.76265695744752",
+        "-87.64223930140751",
+        "-87.82401237748044",
+        "-87.69846450143315",
+        "-87.65489884097713"
+      ]
+    }
+  }
+}

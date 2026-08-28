@@ -16,8 +16,9 @@ served.
 | `make dashboard-data` | Pull datasets from Box into `public/data/` (150 MB gate) |
 | `npm run test:e2e` | Playwright smoke tests against `vite preview` |
 
-The dashboard works immediately after project generation using committed demo
-data.  No Box or Cloudflare setup is required to run locally.
+After generating the project, run `make dashboard-data` once to pull the
+example datasets (Chicago 311 requests + community areas) from Box, then
+`make dashboard-dev`.  No Cloudflare setup is required to run locally.
 
 ---
 
@@ -37,7 +38,9 @@ pipeline → parquet → Box public static link
                       useQuery() hook → PlotFigure / MapLibre
 ```
 
-`public/data/demo.parquet` is committed and works without any setup.
+The example manifest ships two datasets: `reqs_311` (a toy sample of Chicago
+311 service requests) and `community_areas` (GeoParquet boundaries +
+socioeconomic indicators).  Their schemas live in `data/dictionary/`.
 
 ---
 
@@ -90,8 +93,11 @@ For each dataset your pipeline produces:
    in `src/<module>/dashboard_export.py`.
 2. Upload the parquet to the project's Box folder.
 3. In Box, open the file, click **Share → Create shared link**, set access to
-   **People with the link**, and copy the **direct download** URL.  It will
-   look like:
+   **People with the link** (anything more restrictive returns a login page
+   instead of the file, which breaks `pull_data.py` and CI), and set the
+   **link expiration** far in the future (an expired link breaks every
+   student's `make dashboard-data` and the CI deploy).  Copy the
+   **direct download** URL.  It will look like:
    ```
    https://uchicago.box.com/shared/static/<hash>.parquet
    ```

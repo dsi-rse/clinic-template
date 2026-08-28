@@ -206,19 +206,14 @@ See `classifier_evaluator.py` for a complete example.
 The project includes an optional browser dashboard built with Vite, React, and
 DuckDB-wasm.  It queries parquet files in the browser — no backend required.
 
-**Start it locally (works immediately with demo data):**
+**Start it locally (pull the example data from Box first):**
 
 ```bash
+make dashboard-data
 make dashboard-dev
 ```
 
 Open http://localhost:5173.
-
-**Pull real project data from Box:**
-
-```bash
-make dashboard-data
-```
 
 **Build for deployment:**
 

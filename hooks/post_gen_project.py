@@ -32,7 +32,20 @@ if examples != "no":
     )
 
 if use_dashboard:
-    shutil.copytree("_examples/dashboard", "dashboard")
+    # Ignore local build artifacts that may exist when generating from a
+    # working checkout of the template (they are git-ignored, not committed).
+    shutil.copytree(
+        "_examples/dashboard",
+        "dashboard",
+        ignore=shutil.ignore_patterns(
+            "node_modules",
+            "dist",
+            "test-results",
+            "playwright-report",
+            "*.parquet",
+            "*.parquet.tmp",
+        ),
+    )
 
 # Always remove the staging directory
 shutil.rmtree("_examples")

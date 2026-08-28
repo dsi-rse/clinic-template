@@ -146,3 +146,4 @@ venv.bak/
 
 # dashboard data
 dashboard/public/data/*
+!dashboard/public/data/README.md

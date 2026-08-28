@@ -29,10 +29,10 @@ function getDB(): Promise<duckdb.AsyncDuckDB> {
 
       const conn = await db.connect()
 
-      // Every manifest entry plus the committed demo dataset becomes a view
-      // named by its parquet file stem, served from public/data/.
+      // Every manifest entry becomes a view named by its parquet file stem,
+      // served from public/data/.
       const base = import.meta.env.BASE_URL
-      const names = new Set<string>(['demo', ...manifest.map((entry) => entry.name)])
+      const names = new Set<string>(manifest.map((entry) => entry.name))
       for (const name of names) {
         const filename = `${name}.parquet`
         try {

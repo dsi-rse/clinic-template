@@ -12,16 +12,17 @@ here via `@AGENTS.md`.
   browser via DuckDB-wasm.  There is no server, no API, no database connection.
   Do not add a backend, a serverless function, or a proxy.
 - **Parquet lives in `public/data/`**, registered as DuckDB views named by
-  file stem (e.g. `demo.parquet` → view `demo`).  Query with SQL.
+  file stem (e.g. `reqs_311.parquet` → view `reqs_311`).  Query with SQL.
 - **UI components come from React Spectrum only.**  No raw `<button>`,
   `<select>`, `<input>`, or other HTML form elements.  Import from
   `@adobe/react-spectrum`.
 - **Charts go through `useQuery` → `PlotFigure`** (Observable Plot).  Do not
   import charting libraries other than `@observablehq/plot`.
 - **Maps use MapLibre GL** (`maplibre-gl`).  Do not add other map libraries.
-- **Cross-page filter state lives in `src/store/filters.ts`** (Zustand).  Do
-  not create local state that should be shared across pages; add it to the
-  store instead.
+- **Cross-tab filter state lives in `src/store/filters.ts`** (Zustand).  Do
+  not create local state that should be shared across tabs; add it to the
+  store instead.  Build WHERE clauses with `filterSql()` from the same file so
+  every chart respects the global controls.
 - **Read `data/dictionary/<name>.json` before writing any query.**  Never
   guess column names, types, or value ranges.  The dictionary has everything.
 - **Total parquet in `public/data/` must stay under 150 MB.**  This is
@@ -35,62 +36,73 @@ here via `@AGENTS.md`.
 ```
 dashboard/
 ├── src/
-│   ├── main.tsx                  # React Spectrum Provider + BrowserRouter
-│   ├── App.tsx                   # Nav shell + <Routes>
-│   ├── store/filters.ts          # Zustand store — all cross-page state
+│   ├── main.tsx                  # React Spectrum Provider
+│   ├── App.tsx                   # Header, global filter controls, <Tabs>
+│   ├── store/filters.ts          # Zustand store — all cross-tab state + filterSql()
 │   ├── lib/
 │   │   ├── duckdb.ts             # DuckDB-wasm singleton; registers views
 │   │   └── useQuery.ts           # Typed React hook; module-level SQL cache
 │   ├── components/
-│   │   └── PlotFigure.tsx        # Observable Plot → React (≈15 lines)
+│   │   ├── PlotFigure.tsx        # Observable Plot → React (≈15 lines)
+│   │   └── Card.tsx              # Bordered dashboard card (figure + figcaption)
 │   └── pages/
-│       ├── OverviewPage.tsx      # Picker (Zustand) + 2 Plot charts
-│       ├── MapPage.tsx           # MapLibre + DuckDB point layer
-│       └── ChicagoPage.tsx       # Choropleth + controls (the full-featured example)
+│       ├── OverviewPage.tsx      # Trends tab: stat tiles + 4 Plot charts
+│       └── MapPage.tsx           # Map tab: choropleth + legend + ranking
 ├── data/dictionary/              # Committed schema JSON + MD (LLM-ingestible)
 ├── data.manifest.json            # Box URLs for remote datasets
-├── public/data/                  # Local parquet (demo committed; others pulled)
+├── public/data/                  # Local parquet (pulled from Box; git-ignored)
 ├── scripts/pull_data.py          # Stdlib-only data puller; 150 MB gate
 └── scripts/make_sample_geodata.py  # Rebuilds the community_areas GeoParquet
 ```
 
 ---
 
-## How to Add a Page
+## How to Add a Tab
 
-1. Create `src/pages/YourPage.tsx`.  Model it on `OverviewPage.tsx` or
-   `MapPage.tsx`.
-2. Add a `<Route path="/your-page" element={<YourPage />} />` in `App.tsx`.
-3. Add a `<Link to="/your-page">Your Page</Link>` (or a Spectrum `<Item>`) in
-   the nav in `App.tsx`.
-4. Use `useQuery<YourRowType>(sql)` to fetch data.  Render with
-   `<PlotFigure options={Plot.plot({...})} />`.
+The dashboard is a single page with Spectrum `<Tabs>` in `App.tsx`; each tab's
+content is a component in `src/pages/`.
 
-Minimal page skeleton:
+1. Create `src/pages/YourTab.tsx`.  Model it on `OverviewPage.tsx` or
+   `MapPage.tsx`: return a flex-wrapped row of `<Card>` components.
+2. In `App.tsx`, add `<Item key="your-tab">Your Tab</Item>` to the `<TabList>`
+   and a matching `<Item key="your-tab"><YourTab /></Item>` to `<TabPanels>`.
+3. Use `useQuery<YourRowType>(sql)` to fetch data, and
+   `filterSql(requestType, yearRange)` from the store so the global controls
+   apply.  Render charts with `<PlotFigure options={{...}} />` inside a
+   `<Card>`.
+
+Minimal tab skeleton:
 
 ```tsx
-import { useQuery } from "../lib/useQuery";
-import { PlotFigure } from "../components/PlotFigure";
 import * as Plot from "@observablehq/plot";
+import PlotFigure from "../components/PlotFigure";
+import Card from "../components/Card";
+import { useQuery } from "../lib/useQuery";
+import { useFilters, filterSql } from "../store/filters";
 
 interface Row {
-  city: string;
-  value: number;
+  request_type: string;
+  n: number;
 }
 
-export function YourPage() {
+export default function YourTab() {
+  const { requestType, yearRange } = useFilters();
   const { data, loading } = useQuery<Row>(
-    "SELECT city, AVG(value) AS value FROM demo GROUP BY city"
+    `SELECT type_of_service_request AS request_type, CAST(COUNT(*) AS INT) AS n
+     FROM reqs_311 WHERE ${filterSql(requestType, yearRange)}
+     GROUP BY request_type`
   );
 
   if (loading) return <p>Loading…</p>;
 
   return (
-    <PlotFigure
-      options={Plot.plot({
-        marks: [Plot.barY(data, { x: "city", y: "value" })],
-      })}
-    />
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 16, paddingTop: 16 }}>
+      <Card title="Requests by type">
+        <PlotFigure
+          options={{ marks: [Plot.barY(data, { x: "request_type", y: "n" })] }}
+        />
+      </Card>
+    </div>
   );
 }
 ```
@@ -103,16 +115,21 @@ Inside any page, call `useQuery` with a SQL string and pass the result to
 `<PlotFigure>`:
 
 ```tsx
-const { data, loading } = useQuery<{ date: string; value: number }>(
-  "SELECT date, value FROM demo ORDER BY date"
+const { data, loading } = useQuery<{ month: string; n: number }>(
+  `SELECT CAST(date_trunc('month', creation_date) AS VARCHAR) AS month,
+          CAST(COUNT(*) AS INT) AS n
+   FROM reqs_311 GROUP BY month ORDER BY month`
 );
 
 <PlotFigure
   options={Plot.plot({
-    marks: [Plot.line(data, { x: "date", y: "value" })],
+    marks: [Plot.line(data, { x: (d) => new Date(d.month), y: "n" })],
   })}
 />
 ```
+
+Note: `CAST(COUNT(*) AS INT)` — DuckDB counts are BIGINT, which arrive in
+JavaScript as `BigInt`; cast to INT in SQL to get plain numbers.
 
 For Observable Plot documentation, see https://observablehq.com/plot/.
 
@@ -123,30 +140,30 @@ For Observable Plot documentation, see https://observablehq.com/plot/.
 1. Add a field and setter to `FiltersState` in `src/store/filters.ts`:
 
    ```ts
-   category: string;
-   setCategory: (c: string) => void;
+   status: string;
+   setStatus: (s: string) => void;
    ```
 
 2. Initialise it in the `create` call (same file):
 
    ```ts
-   category: "all",
-   setCategory: (category) => set({ category }),
+   status: "All",
+   setStatus: (status) => set({ status }),
    ```
 
 3. In any page, read and set it:
 
    ```tsx
-   const { category, setCategory } = useFilters();
+   const { status, setStatus } = useFilters();
    ```
 
 4. Include the value in your SQL `WHERE` clause:
 
    ```ts
    const sql =
-     category === "all"
-       ? "SELECT * FROM demo"
-       : `SELECT * FROM demo WHERE category = '${category}'`;
+     status === "All"
+       ? "SELECT * FROM reqs_311"
+       : `SELECT * FROM reqs_311 WHERE status = '${status}'`;
    ```
 
 ---
@@ -168,26 +185,29 @@ For Observable Plot documentation, see https://observablehq.com/plot/.
 - Hard limit: **150 MB** total parquet in `public/data/`.
 - Enforced locally by `scripts/pull_data.py --force` (exit 1 on breach).
 - Enforced in CI before every build.
-- The committed demo file is ~50 KB and does not count toward the project budget.
 
 ---
 
-## Columns in the Demo Dataset
+## The reqs_311 Dataset
 
-See `data/dictionary/demo.json` for the authoritative schema.  Summary:
+See `data/dictionary/reqs_311.json` for the authoritative schema.  A toy
+sample (~1.6M rows) of Chicago 311 service requests, pulled from Box via
+`make dashboard-data`.  The dashboard only shows 2011–2017 (`DATA_YEARS` in
+`src/store/filters.ts`): the city migrated 311 systems in late 2018, so later
+years in the extract are partial.  Summary:
 
 | Column | Type | Notes |
 |---|---|---|
-| `id` | INT | Row identifier |
-| `date` | DATE | 365 days ending 2026-06-30 |
-| `city` | VARCHAR | 5 cities with real lat/lon |
-| `lat` | DOUBLE | Latitude |
-| `lon` | DOUBLE | Longitude |
-| `category` | VARCHAR | 4 values: A, B, C, D |
-| `value` | DOUBLE | Synthetic sensor reading |
+| `creation_date` | TIMESTAMP | 2011 – 2019 |
+| `status` | VARCHAR | `Completed` / `Open`; NULL for vacant-building reports |
+| `completion_date` | TIMESTAMP | NULL for open requests |
+| `service_request_number` | VARCHAR | e.g. `14-01604713` |
+| `type_of_service_request` | VARCHAR | 13 values (Graffiti Removal, Pothole in Street, …) |
+| `community_area` | BIGINT | 1–77; joins to `community_areas.area_num` |
+| `latitude` / `longitude` | DOUBLE | Request location (a few 0.0 outliers) |
 
 For any dataset you add, read `data/dictionary/<name>.json` — the structure is
-the same: one entry per column with `dtype`, `null_count`, `n_unique`, `min`,
+the same: one entry per column with `dtype`, `nulls`, `n_unique`, `min`,
 `max`, and `samples`.
 
 ## The community_areas Dataset (GeoParquet)
@@ -196,6 +216,7 @@ the same: one entry per column with `dtype`, `null_count`, `n_unique`, `min`,
 holds Chicago's 77 community areas with census socioeconomic indicators.  It is a
 GeoParquet file: the `geometry` column is WKB (not queryable in DuckDB-wasm
 without the spatial extension), so it also carries a `geometry_geojson` string
-column — parse it with `JSON.parse` and feed it to MapLibre, as `ChicagoPage.tsx`
-does.  `ChicagoPage.tsx` is the reference for choropleths, map hover popups, and
-indicator pickers.
+column — parse it with `JSON.parse` and feed it to MapLibre, as `MapPage.tsx`
+does.  `MapPage.tsx` is the reference for choropleths, map hover popups, and
+aggregating `reqs_311` to community areas (attribute join on
+`community_area = area_num` — no spatial join needed).

@@ -3,11 +3,11 @@
 This walkthrough takes you from zero to a live dashboard.
 By the end you will have:
 
-1. Started the dev server and seen charts on real demo data
+1. Started the dev server and seen charts on real Chicago 311 data
 2. Understood how data flows from your pipeline to the browser
 3. Changed an existing chart
 4. Added a filter backed by the Zustand store
-5. Added a new page — framed as an agent task you hand to an LLM
+5. Added a new tab — framed as an agent task you hand to an LLM
 6. Shipped the dashboard to a public Cloudflare Pages URL
 
 Before you start, make sure you've completed the
@@ -18,16 +18,18 @@ and have Docker and Make working on your machine.
 
 ## Step 1: Run It
 
-Start the dev server with the committed demo data:
+Pull the example datasets from Box, then start the dev server:
 
 ```bash
+make dashboard-data
 make dashboard-dev
 ```
 
-Open http://localhost:5173.  You should see two pages in the nav bar:
-**Overview** (bar and scatter charts) and **Map** (point layer on a base map).
-Both pages load data from `public/data/demo.parquet` — no network calls, no
-Box setup needed yet.
+Open http://localhost:5173.  You should see a dashboard with global controls
+(a request-type picker and a year-range slider) and two tabs: **Trends**
+(stat tiles plus trend and breakdown charts) and **Map** (a choropleth of
+requests per community area).  Everything queries the parquet files that
+`make dashboard-data` just placed in `public/data/`.
 
 > **Troubleshooting.** If `make dashboard-dev` errors with "Docker not found",
 > make sure Docker Desktop is running. If Node is not installed locally but
@@ -53,9 +55,11 @@ pipeline → parquet → Box public static link
                       useQuery() hook → PlotFigure / MapLibre
 ```
 
-**The demo dataset** (`public/data/demo.parquet`) is committed to the repo so
-the dashboard works immediately after generation.  It contains ~1 500 rows with
-columns `id, date, city, lat, lon, category, value`.
+**The example datasets** come from Box via the manifest: `reqs_311` (a toy
+sample of ~1.6M Chicago 311 service requests: `creation_date, status,
+type_of_service_request, community_area, …`) and `community_areas` (Chicago's
+77 community areas as GeoParquet, with a MapLibre-ready `geometry_geojson`
+column).  Their full schemas live in `data/dictionary/`.
 
 **For real project data**, the workflow is:
 
@@ -74,10 +78,9 @@ The data dictionary (committed JSON + Markdown) documents every column's type,
 null count, unique-value count, and sample values.  Hand it to an LLM instead
 of pasting raw data — see Step 5.
 
-**DuckDB views** — every parquet in `public/data/` (including `demo`) is
-registered at startup as a view named after the file stem.  A query like
-`SELECT * FROM demo LIMIT 5` or `SELECT * FROM my_dataset WHERE city = 'Chicago'`
-just works.
+**DuckDB views** — every manifest entry is registered at startup as a view
+named after the file stem.  A query like `SELECT * FROM reqs_311 LIMIT 5` or
+`SELECT * FROM my_dataset WHERE category = 'A'` just works.
 
 ---
 
@@ -88,63 +91,64 @@ block.  The `options` prop is a plain
 [Observable Plot](https://observablehq.com/plot/) spec — change it and the
 browser hot-reloads.
 
-For example, to switch from a bar chart to a line chart:
+For example, to switch the monthly trend from a line chart to an area chart:
 
 ```tsx
 <PlotFigure
   options={Plot.plot({
     marks: [
-      Plot.line(data, { x: "date", y: "value", stroke: "category" }),
+      Plot.areaY(monthly, { x: (d) => new Date(d.month), y: "n" }),
     ],
   })}
 />
 ```
 
-`data` comes from `useQuery<Row>(sql)`, which returns an array of typed row
-objects.  Look at the existing page for the full pattern.
+`monthly` comes from `useQuery<Row>(sql)`, which returns an array of typed row
+objects.  Look at the existing tab components for the full pattern.
 
 > **Where do column names come from?** Read
-> `data/dictionary/demo.json` — it lists every column with its type and sample
-> values.  Never guess column names; always check the dictionary first.
+> `data/dictionary/reqs_311.json` — it lists every column with its type and
+> sample values.  Never guess column names; always check the dictionary first.
 
 ---
 
 ## Step 4: Add a Filter
 
-Filters that need to persist across pages live in the Zustand store at
+Filters that need to persist across tabs live in the Zustand store at
 `src/store/filters.ts`.  This is the single source of truth for all UI state.
 
 **1. Extend the store.**  Open `src/store/filters.ts` and add your field:
 
 ```ts
 interface FiltersState {
-  city: string;           // existing field
-  setCity: (c: string) => void;
-  category: string;       // ← add this
-  setCategory: (c: string) => void;
+  requestType: string;    // existing field
+  setRequestType: (t: string) => void;
+  status: string;         // ← add this
+  setStatus: (s: string) => void;
 }
 
 export const useFilters = create<FiltersState>()((set) => ({
-  city: "all",
-  setCity: (city) => set({ city }),
-  category: "all",       // ← add this
-  setCategory: (category) => set({ category }),
+  requestType: "All",
+  setRequestType: (requestType) => set({ requestType }),
+  status: "All",          // ← add this
+  setStatus: (status) => set({ status }),
 }));
 ```
 
-**2. Wire up a Spectrum picker** in your page:
+**2. Wire up a Spectrum picker** in your tab (derive the options from a
+`SELECT DISTINCT` query, as `OverviewPage.tsx` does — never hardcode values):
 
 ```tsx
-const { category, setCategory } = useFilters();
+const { status, setStatus } = useFilters();
 
 <Picker
-  label="Category"
-  selectedKey={category}
-  onSelectionChange={(k) => setCategory(String(k))}
+  label="Status"
+  selectedKey={status}
+  onSelectionChange={(k) => setStatus(String(k))}
 >
-  <Item key="all">All</Item>
-  <Item key="A">A</Item>
-  <Item key="B">B</Item>
+  {statuses.map((s) => (
+    <Item key={s}>{s}</Item>
+  ))}
 </Picker>
 ```
 
@@ -152,20 +156,21 @@ const { category, setCategory } = useFilters();
 
 ```ts
 const sql =
-  category === "all"
-    ? "SELECT * FROM demo"
-    : `SELECT * FROM demo WHERE category = '${category}'`;
+  status === "All"
+    ? "SELECT * FROM reqs_311"
+    : `SELECT * FROM reqs_311 WHERE status = '${status}'`;
 
 const { data } = useQuery<Row>(sql);
 ```
 
-Any other page that calls `useFilters()` will see the same `category` value.
+Any other tab that calls `useFilters()` will see the same `status` value —
+that is how the global request-type picker applies to both the Trends and Map tabs.
 
 ---
 
-## Step 5: Add a Page (Agent Task)
+## Step 5: Add a Tab (Agent Task)
 
-Adding a full page is a good task to hand to an LLM.  Prepare two files:
+Adding a full tab is a good task to hand to an LLM.  Prepare two files:
 
 - `AGENTS.md` — the hard rules for this codebase (no backend, Spectrum-only
   components, query via `useQuery`, etc.)
@@ -173,10 +178,9 @@ Adding a full page is a good task to hand to an LLM.  Prepare two files:
 
 Then prompt your agent:
 
-> Read `dashboard/AGENTS.md` and `dashboard/data/dictionary/demo.json`.
-> Create `src/pages/TrendPage.tsx` that shows a line chart of average `value`
-> over `date`, broken down by `category`.  Add a route and nav link in
-> `src/App.tsx` so the page is reachable.
+> Read `dashboard/AGENTS.md` and `dashboard/data/dictionary/reqs_311.json`.
+> Create `src/pages/StatusTab.tsx` that shows a line chart of monthly request
+> counts broken down by `status`.  Add it as a new tab in `src/App.tsx`.
 
 The agent has everything it needs: the rules, the column types, the patterns
 from `OverviewPage.tsx` and `MapPage.tsx`, and the `useQuery` / `PlotFigure`
@@ -184,7 +188,7 @@ primitives.
 
 After the agent writes the files:
 
-1. Check the dev server — the new nav link should appear immediately.
+1. Check the dev server — the new tab should appear immediately.
 2. Run `make dashboard-build` to make sure TypeScript compiles cleanly.
 
 ---
@@ -204,8 +208,7 @@ GitHub Actions runs automatically:
 1. Pulls data from Box via `scripts/pull_data.py` (fails fast if total exceeds
    150 MB).
 2. Runs `npm ci && npm run build`.
-3. Runs the Playwright smoke test (Overview page renders charts, Map page
-   renders).
+3. Runs the Playwright smoke test (both tabs render).
 4. Deploys to Cloudflare Pages: `https://<slug>-dashboard.pages.dev`.
 
 The deploy step is skipped on pull requests — PRs only build and test.
@@ -231,14 +234,14 @@ The deploy step is skipped on pull requests — PRs only build and test.
 
 | Path | Purpose |
 |---|---|
-| `src/pages/` | One file per page |
-| `src/store/filters.ts` | Cross-page filter state (Zustand) |
+| `src/pages/` | One file per tab |
+| `src/store/filters.ts` | Cross-tab filter state (Zustand) + `filterSql()` |
 | `src/lib/duckdb.ts` | DuckDB-wasm singleton and query helper |
 | `src/lib/useQuery.ts` | React hook wrapping the query helper |
 | `src/components/PlotFigure.tsx` | Observable Plot → React wrapper |
 | `data/dictionary/` | Per-dataset schema JSON + Markdown |
 | `data.manifest.json` | Box URLs for remote datasets |
-| `public/data/` | Local parquet files (not committed except demo) |
+| `public/data/` | Local parquet files (git-ignored; pulled from Box) |
 
 ### Useful links
 
@@ -252,11 +255,11 @@ The deploy step is skipped on pull requests — PRs only build and test.
 
 ## What to Do Next
 
-- **Explore the demo data.** Open a browser console, set a breakpoint, or add
+- **Explore the 311 data.** Open a browser console, set a breakpoint, or add
   a `console.log(data)` after `useQuery` to inspect the rows your SQL returns.
 - **Export your first real dataset.** Run `dashboard_export.py` on a DataFrame
   from your pipeline and add it to the manifest.
-- **Hand a page to an LLM.** Follow Step 5 with your real data dictionary and
+- **Hand a tab to an LLM.** Follow Step 5 with your real data dictionary and
   see how quickly a new visualization comes together.
 - **Ask your mentor** if you need help with the one-time Cloudflare or Box
   setup, or if the CI deploy step fails.
