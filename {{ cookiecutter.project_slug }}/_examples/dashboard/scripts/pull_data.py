@@ -33,6 +33,10 @@ def pull_data(*, force: bool = False) -> None:
         url: str = entry["url"]
         dest: Path = OUTPUT_DIR / f"{name}.parquet"
 
+        if not url:
+            print(f"  skip  {dest.name} (no URL in manifest yet)")
+            continue
+
         if dest.exists() and not force:
             print(f"  skip  {dest.name} (already exists; use --force to re-download)")
             continue

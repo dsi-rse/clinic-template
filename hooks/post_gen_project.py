@@ -31,6 +31,9 @@ if examples != "no":
         f"_examples/{examples.replace('-', '_')}", ".", dirs_exist_ok=True
     )
 
+if use_dashboard:
+    shutil.copytree("_examples/dashboard", "dashboard")
+
 # Always remove the staging directory
 shutil.rmtree("_examples")
 
@@ -61,7 +64,6 @@ if not use_annotations:
         f.writelines(new_text_lines)
 
 if not use_dashboard:
-    shutil.rmtree("dashboard")
     workflow = ".github/workflows/dashboard.workflow.yml"
     if os.path.exists(workflow):
         os.remove(workflow)

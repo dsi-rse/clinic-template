@@ -45,11 +45,13 @@ dashboard/
 │   │   └── PlotFigure.tsx        # Observable Plot → React (≈15 lines)
 │   └── pages/
 │       ├── OverviewPage.tsx      # Picker (Zustand) + 2 Plot charts
-│       └── MapPage.tsx           # MapLibre + DuckDB point layer
+│       ├── MapPage.tsx           # MapLibre + DuckDB point layer
+│       └── ChicagoPage.tsx       # Choropleth + controls (the full-featured example)
 ├── data/dictionary/              # Committed schema JSON + MD (LLM-ingestible)
 ├── data.manifest.json            # Box URLs for remote datasets
 ├── public/data/                  # Local parquet (demo committed; others pulled)
-└── scripts/pull_data.py          # Stdlib-only data puller; 150 MB gate
+├── scripts/pull_data.py          # Stdlib-only data puller; 150 MB gate
+└── scripts/make_sample_geodata.py  # Rebuilds the community_areas GeoParquet
 ```
 
 ---
@@ -187,3 +189,13 @@ See `data/dictionary/demo.json` for the authoritative schema.  Summary:
 For any dataset you add, read `data/dictionary/<name>.json` — the structure is
 the same: one entry per column with `dtype`, `null_count`, `n_unique`, `min`,
 `max`, and `samples`.
+
+## The community_areas Dataset (GeoParquet)
+
+`community_areas.parquet` (pulled from Box; see `data/dictionary/community_areas.md`)
+holds Chicago's 77 community areas with census socioeconomic indicators.  It is a
+GeoParquet file: the `geometry` column is WKB (not queryable in DuckDB-wasm
+without the spatial extension), so it also carries a `geometry_geojson` string
+column — parse it with `JSON.parse` and feed it to MapLibre, as `ChicagoPage.tsx`
+does.  `ChicagoPage.tsx` is the reference for choropleths, map hover popups, and
+indicator pickers.

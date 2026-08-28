@@ -32,5 +32,5 @@
         "ann": "Would you like to require type annotations in ruff?",
         "dashboard": "Would you like to include an optional Vite/React dashboard scaffold? (Static parquet + DuckDB-wasm, no backend)"
     },
-    "_copy_without_render": ["dashboard"]
+    "_copy_without_render": ["_examples/dashboard"]
 }
