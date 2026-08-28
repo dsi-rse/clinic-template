@@ -14,19 +14,6 @@ export default function App() {
   )
   const types = ['All', ...(typeRows ?? []).map((r) => r.request_type)]
 
-  if (error) {
-    return (
-      <div style={{ padding: '1rem' }}>
-        <h1>Chicago 311 Service Requests</h1>
-        <p>
-          The <code>reqs_311</code> dataset is not loaded. Run{' '}
-          <code>make dashboard-data</code> to pull it from Box (see{' '}
-          <code>data/dictionary/reqs_311.md</code>).
-        </p>
-      </div>
-    )
-  }
-
   return (
     <div style={{ maxWidth: 1080, margin: '0 auto', padding: '1rem 1.5rem 3rem' }}>
       <header>
@@ -37,45 +24,57 @@ export default function App() {
         </p>
       </header>
 
-      <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'end', marginBottom: 8 }}>
-        <Picker
-          label="Request type"
-          selectedKey={requestType}
-          onSelectionChange={(key) => setRequestType(String(key))}
-        >
-          {types.map((t) => (
-            <Item key={t}>{t}</Item>
-          ))}
-        </Picker>
-        <RangeSlider
-          label="Years"
-          minValue={DATA_YEARS.min}
-          maxValue={DATA_YEARS.max}
-          defaultValue={yearRange}
-          onChangeEnd={setYearRange}
-          formatOptions={{ useGrouping: false }}
-          width="size-3000"
-        />
-      </div>
+      {error ? (
+        <p>
+          The <code>reqs_311</code> dataset is not loaded. Run{' '}
+          <code>make dashboard-data</code> to pull it from Box (see{' '}
+          <code>data/dictionary/reqs_311.md</code>).
+        </p>
+      ) : (
+        <>
+          <div
+            style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'end', marginBottom: 8 }}
+          >
+            <Picker
+              label="Request type"
+              selectedKey={requestType}
+              onSelectionChange={(key) => setRequestType(String(key))}
+            >
+              {types.map((t) => (
+                <Item key={t}>{t}</Item>
+              ))}
+            </Picker>
+            <RangeSlider
+              label="Years"
+              minValue={DATA_YEARS.min}
+              maxValue={DATA_YEARS.max}
+              defaultValue={yearRange}
+              onChangeEnd={setYearRange}
+              formatOptions={{ useGrouping: false }}
+              width="size-3000"
+            />
+          </div>
 
-      <Tabs aria-label="Dashboard views">
-        <TabList>
-          <Item key="trends">Trends</Item>
-          <Item key="map">Map</Item>
-          <Item key="sql">SQL</Item>
-        </TabList>
-        <TabPanels>
-          <Item key="trends">
-            <OverviewPage />
-          </Item>
-          <Item key="map">
-            <MapPage />
-          </Item>
-          <Item key="sql">
-            <SqlPage />
-          </Item>
-        </TabPanels>
-      </Tabs>
+          <Tabs aria-label="Dashboard views">
+            <TabList>
+              <Item key="trends">Trends</Item>
+              <Item key="map">Map</Item>
+              <Item key="sql">SQL</Item>
+            </TabList>
+            <TabPanels>
+              <Item key="trends">
+                <OverviewPage />
+              </Item>
+              <Item key="map">
+                <MapPage />
+              </Item>
+              <Item key="sql">
+                <SqlPage />
+              </Item>
+            </TabPanels>
+          </Tabs>
+        </>
+      )}
     </div>
   )
 }
