@@ -1,4 +1,4 @@
-{% if cookiecutter.dashboard == 'yes' %}
+{% if cookiecutter.dashboard == 'yes' -%}
 """Export pipeline outputs as parquet + data dictionaries for the dashboard.
 
 Usage:
@@ -88,4 +88,4 @@ def export_dataset(df: pd.DataFrame, name: str) -> None:
     md_path = DICT_DIR / f"{name}.md"
     md_path.write_text(_dict_to_markdown(name, info))
     print(f"  wrote {md_path}")
-{% endif %}
+{%- endif %}

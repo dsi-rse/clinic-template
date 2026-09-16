@@ -52,6 +52,7 @@ RENAME = {
 
 
 def build() -> gpd.GeoDataFrame:
+    """Download Chicago community-area boundaries and join socioeconomic indicators."""
     with urllib.request.urlopen(BOUNDARIES_URL) as resp:  # noqa: S310
         boundaries = gpd.read_file(resp)
     with urllib.request.urlopen(SOCIO_URL) as resp:  # noqa: S310
@@ -73,9 +74,7 @@ def build() -> gpd.GeoDataFrame:
     gdf = gdf.sort_values("area_num").reset_index(drop=True)
 
     # Simplify + round coordinates so the file stays small (~0.5 MB).
-    gdf["geometry"] = shapely.set_precision(
-        gdf.geometry.simplify(0.0001), 1e-5
-    )
+    gdf["geometry"] = shapely.set_precision(gdf.geometry.simplify(0.0001), 1e-5)
     # MapLibre-ready GeoJSON strings; DuckDB-wasm can't decode WKB without
     # the spatial extension, so ship both representations.
     gdf["geometry_geojson"] = gdf.geometry.apply(shapely.to_geojson)
@@ -83,6 +82,7 @@ def build() -> gpd.GeoDataFrame:
 
 
 def write_dictionary(gdf: gpd.GeoDataFrame) -> None:
+    """Write the JSON and Markdown data dictionaries for *gdf*."""
     columns: dict[str, dict] = {}
     for col in gdf.columns:
         series = gdf[col]

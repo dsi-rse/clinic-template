@@ -263,6 +263,13 @@ test_dashboard() {
     python3 -m json.tool dashboard/data/dictionary/community_areas.json > /dev/null
     echo "   ✓ package.json, package-lock.json, data.manifest.json, dictionaries valid"
 
+    echo "   Checking generated project is ruff-clean (dashboard files included)..."
+    # Same ruff version as the generated .pre-commit-config.yaml, so a fresh
+    # project's first PR can't fail CI on files the student never touched.
+    uvx ruff@0.7.2 check .
+    uvx ruff@0.7.2 format --check .
+    echo "   ✓ ruff check + format pass on the generated project"
+
     echo "   Checking workflow contains project slug..."
     if ! grep -q "$project_slug" .github/workflows/dashboard.workflow.yml; then
         echo "   ✗ Project slug not found in dashboard workflow"
