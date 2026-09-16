@@ -18,6 +18,7 @@ import urllib.request
 from pathlib import Path
 
 MAX_TOTAL_MB: int = 150
+MAX_FILE_MIB: int = 25  # Cloudflare Pages rejects any single deploy asset over this
 MANIFEST_PATH: Path = Path(__file__).parent.parent / "data.manifest.json"
 OUTPUT_DIR: Path = Path(__file__).parent.parent / "public" / "data"
 
@@ -59,10 +60,21 @@ def pull_data(*, force: bool = False) -> None:
 
 
 def _check_size_gate() -> None:
-    """Fail if total parquet size in public/data/ exceeds MAX_TOTAL_MB."""
-    total_bytes: int = sum(
-        p.stat().st_size for p in OUTPUT_DIR.glob("*.parquet") if p.is_file()
-    )
+    """Fail if any parquet exceeds MAX_FILE_MIB or the total exceeds MAX_TOTAL_MB."""
+    total_bytes: int = 0
+    for p in OUTPUT_DIR.glob("*.parquet"):
+        if not p.is_file():
+            continue
+        size_mib: float = p.stat().st_size / 1_048_576
+        total_bytes += p.stat().st_size
+        if size_mib > MAX_FILE_MIB:
+            print(
+                f"ERROR: {p.name} is {size_mib:.1f} MiB; Cloudflare Pages rejects "
+                f"deploy assets over {MAX_FILE_MIB} MiB, so the deploy job would "
+                "fail. Pre-aggregate or drop unused columns before exporting.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
     total_mb: float = total_bytes / 1_048_576
     print(f"  total {total_mb:.2f} MB / {MAX_TOTAL_MB} MB limit")
     if total_mb > MAX_TOTAL_MB:

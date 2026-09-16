@@ -12,7 +12,7 @@ const compact = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
 })
 
-function StatTile({ label, value }: { label: string; value: string }) {
+function StatTile({ label, value, testId }: { label: string; value: string; testId?: string }) {
   return (
     <div
       style={{
@@ -24,7 +24,9 @@ function StatTile({ label, value }: { label: string; value: string }) {
       }}
     >
       <div style={{ fontSize: 13, color: '#52514e' }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 600, color: '#0b0b0b' }}>{value}</div>
+      <div data-testid={testId} style={{ fontSize: 28, fontWeight: 600, color: '#0b0b0b' }}>
+        {value}
+      </div>
     </div>
   )
 }
@@ -39,10 +41,15 @@ export default function OverviewPage() {
   const { data: stats, loading } = useQuery<{
     total: number
     completed: number
-    median_days: number
+    // COUNT(status): vacant-building reports have NULL status, so % completed
+    // must be computed over rows where the status is actually known.
+    with_status: number
+    // median() is NULL when no row in the selection has a completion_date.
+    median_days: number | null
   }>(
     `SELECT CAST(COUNT(*) AS INT) AS total,
             CAST(COUNT(*) FILTER (WHERE status = 'Completed') AS INT) AS completed,
+            CAST(COUNT(status) AS INT) AS with_status,
             CAST(median(date_diff('day', creation_date, completion_date)) AS DOUBLE) AS median_days
      FROM reqs_311 WHERE ${where}`,
   )
@@ -84,9 +91,15 @@ export default function OverviewPage() {
 
       {s && s.total > 0 && (
         <>
-          <StatTile label="Total requests" value={compact.format(s.total)} />
-          <StatTile label="Completed" value={`${((100 * s.completed) / s.total).toFixed(1)}%`} />
-          <StatTile label="Median days to close" value={s.median_days.toFixed(0)} />
+          <StatTile label="Total requests" value={compact.format(s.total)} testId="stat-total" />
+          <StatTile
+            label="Completed"
+            value={s.with_status > 0 ? `${((100 * s.completed) / s.with_status).toFixed(1)}%` : '—'}
+          />
+          <StatTile
+            label="Median days to close"
+            value={s.median_days == null ? '—' : s.median_days.toFixed(0)}
+          />
         </>
       )}
 

@@ -30,8 +30,14 @@ here via `@AGENTS.md`.
   request type) could carry markup.  Use `setText()`, or build DOM nodes and
   assign data values with `textContent` before `setDOMContent()`, as
   `MapPage.tsx` does.
-- **Total parquet in `public/data/` must stay under 150 MB.**  This is
-  enforced by `scripts/pull_data.py` (exit 1) and CI.  Do not commit large
+- **Everything in `public/data/` is published publicly.**  `vite build` copies
+  it into `dist/`, which is deployed to a guessable public URL and cached.  Any
+  URL you add to `data.manifest.json` becomes a world-readable download.
+  Aggregate or de-identify before exporting, and never put partner-restricted
+  data here.
+- **Total parquet in `public/data/` must stay under 150 MB, and no single
+  file over 25 MiB** (Cloudflare Pages rejects larger deploy assets).  Both
+  are enforced by `scripts/pull_data.py` (exit 1) and CI.  Do not commit large
   parquet files.
 
 ---
@@ -99,7 +105,7 @@ export default function YourTab() {
      GROUP BY request_type`
   );
 
-  if (loading) return <p>Loading…</p>;
+  if (loading || !data) return <p>Loading…</p>;
 
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 16, paddingTop: 16 }}>
@@ -128,11 +134,14 @@ const { data, loading } = useQuery<{ month: string; n: number }>(
 );
 
 <PlotFigure
-  options={Plot.plot({
+  options={{
     marks: [Plot.line(data, { x: (d) => new Date(d.month), y: "n" })],
-  })}
+  }}
 />
 ```
+
+`options` takes the plain Plot spec object — `PlotFigure` calls `Plot.plot()`
+itself.  Never wrap the spec in `Plot.plot(...)` at the call site.
 
 Note: `CAST(COUNT(*) AS INT)` — DuckDB counts are BIGINT, which arrive in
 JavaScript as `BigInt`; cast to INT in SQL to get plain numbers.
@@ -204,13 +213,14 @@ years in the extract are partial.  Summary:
 
 | Column | Type | Notes |
 |---|---|---|
-| `creation_date` | TIMESTAMP | 2011 – 2019 |
+| `creation_date` | TIMESTAMP | 2011 – 2019 (the dashboard shows 2011–2017) |
 | `status` | VARCHAR | `Completed` / `Open`; NULL for vacant-building reports |
-| `completion_date` | TIMESTAMP | NULL for open requests |
-| `service_request_number` | VARCHAR | e.g. `14-01604713` |
+| `completion_date` | TIMESTAMP | NULL for open and vacant-building requests |
 | `type_of_service_request` | VARCHAR | 13 values (Graffiti Removal, Pothole in Street, …) |
 | `community_area` | BIGINT | 1–77; joins to `community_areas.area_num` |
-| `latitude` / `longitude` | DOUBLE | Request location (a few 0.0 outliers) |
+
+(Location columns from the raw 311 data are deliberately dropped — they were
+82% of the file size, and every deploy asset must stay under 25 MiB.)
 
 For any dataset you add, read `data/dictionary/<name>.json` — the structure is
 the same: one entry per column with `dtype`, `nulls`, `n_unique`, `min`,

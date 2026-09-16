@@ -278,7 +278,9 @@ test_dashboard() {
     echo "   ✓ Workflow contains project slug"
 
     echo "   Building dashboard in Docker (npm ci && npm run build)..."
-    docker compose run --rm dashboard sh -c "npm ci && npm run build"
+    # rm -rf dist inside the container: the build runs as root against the
+    # bind mount, and a root-owned dist/ on the host breaks cleanup_project.
+    docker compose run --rm dashboard sh -c "npm ci && npm run build && rm -rf dist"
     echo "   ✓ Dashboard builds (tsc + vite) in node:22-slim"
 }
 

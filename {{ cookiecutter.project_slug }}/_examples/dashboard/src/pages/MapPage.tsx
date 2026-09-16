@@ -26,7 +26,17 @@ const METRIC_KEYS = Object.keys(METRICS) as MetricKey[]
 
 type AreaRow = { name: string; geometry_geojson: string } & Record<MetricKey, number>
 
-function fillExpression(key: MetricKey, min: number, max: number): maplibregl.ExpressionSpecification {
+function fillExpression(
+  key: MetricKey,
+  min: number,
+  max: number,
+): string | maplibregl.ExpressionSpecification {
+  if (!(max > min)) {
+    // All areas share one value (or there is no data): a ramp is meaningless,
+    // and MapLibre silently rejects non-ascending interpolate stops — the map
+    // would keep the previous filter's colors. (Also covers NaN.)
+    return RAMP[0]
+  }
   const stops = RAMP.flatMap((color, i) => [min + ((max - min) * i) / (RAMP.length - 1), color])
   return ['interpolate', ['linear'], ['get', key], ...stops] as maplibregl.ExpressionSpecification
 }
@@ -49,6 +59,7 @@ function sparklineSvg(values: number[]): string {
 // Vertical gradient legend, overlaid on the map (dark = higher value, on top).
 function MapLegend({ min, max, format }: { min: number; max: number; format: (v: number) => string }) {
   const label = { fontSize: 11, color: '#52514e', lineHeight: 1 }
+  const flat = !(max > min) // matches fillExpression's degenerate case
   return (
     <div
       style={{
@@ -66,15 +77,21 @@ function MapLegend({ min, max, format }: { min: number; max: number; format: (v:
       <div
         style={{
           width: 10,
-          height: 120,
+          height: flat ? 12 : 120,
           borderRadius: 4,
-          background: `linear-gradient(to top, ${RAMP.join(', ')})`,
+          background: flat ? RAMP[0] : `linear-gradient(to top, ${RAMP.join(', ')})`,
         }}
       />
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <span style={label}>{format(max)}</span>
-        <span style={label}>{format(min + (max - min) / 2)}</span>
-        <span style={label}>{format(min)}</span>
+        {flat ? (
+          <span style={label}>{format(min)} (all areas)</span>
+        ) : (
+          <>
+            <span style={label}>{format(max)}</span>
+            <span style={label}>{format(min + (max - min) / 2)}</span>
+            <span style={label}>{format(min)}</span>
+          </>
+        )}
       </div>
     </div>
   )

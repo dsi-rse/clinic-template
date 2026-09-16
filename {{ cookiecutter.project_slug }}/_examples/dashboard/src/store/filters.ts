@@ -40,7 +40,10 @@ export function filterSql(
     `${prefix}creation_date < DATE '${end + 1}-01-01'`,
   ]
   if (requestType !== 'All') {
-    clauses.push(`${prefix}type_of_service_request = '${requestType}'`)
+    // Escape single quotes so a value like "Mayor's Office" can't break the
+    // SQL string literal.
+    const safe = requestType.replaceAll("'", "''")
+    clauses.push(`${prefix}type_of_service_request = '${safe}'`)
   }
   return clauses.join(' AND ')
 }

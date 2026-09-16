@@ -17,7 +17,7 @@ PROJECT_DIR="$TEST_DIR/$PROJECT_SLUG"
 
 print_test_header "$TEST_NAME"
 
-cleanup_project "$PROJECT_DIR"
+cleanup_project "$PROJECT_DIR" || true
 mkdir -p "$TEST_DIR"
 
 # NOTE: the subshell must NOT be part of a `|| { ... }` list — that would
@@ -41,12 +41,12 @@ set -e
 
 if [ $STATUS -ne 0 ]; then
     print_test_failure "$TEST_NAME"
-    cleanup_project "$PROJECT_DIR"
+    cleanup_project "$PROJECT_DIR" || true
     exit 1
 fi
 print_test_success "$TEST_NAME"
 
-cleanup_project "$PROJECT_DIR"
+cleanup_project "$PROJECT_DIR" || true
 
 # ---------------------------------------------------------------------------
 # Scenario 2: dashboard=no
@@ -59,7 +59,7 @@ PROJECT_DIR="$TEST_DIR/$PROJECT_SLUG"
 
 print_test_header "$TEST_NAME"
 
-cleanup_project "$PROJECT_DIR"
+cleanup_project "$PROJECT_DIR" || true
 
 set +e
 (
@@ -107,15 +107,20 @@ set +e
         exit 1
     fi
     echo "   ✓ Makefile has no dashboard targets"
+
+    echo "   Checking rendered docker-compose.yaml and Makefile still parse..."
+    (cd "$PROJECT_DIR" && docker compose config -q)
+    (cd "$PROJECT_DIR" && make -n build-only > /dev/null)
+    echo "   ✓ docker compose config and make -n succeed"
 )
 STATUS=$?
 set -e
 
 if [ $STATUS -ne 0 ]; then
     print_test_failure "$TEST_NAME"
-    cleanup_project "$PROJECT_DIR"
+    cleanup_project "$PROJECT_DIR" || true
     exit 1
 fi
 print_test_success "$TEST_NAME"
 
-cleanup_project "$PROJECT_DIR"
+cleanup_project "$PROJECT_DIR" || true

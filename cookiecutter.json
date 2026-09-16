@@ -30,7 +30,7 @@
         },
         "bsd": "Would you like to use DSI's default license (BSD-3)?",
         "ann": "Would you like to require type annotations in ruff?",
-        "dashboard": "Would you like to include an optional Vite/React dashboard scaffold? (Static parquet + DuckDB-wasm, no backend)"
+        "dashboard": "Would you like to include an optional Vite/React dashboard scaffold? (Static parquet + DuckDB-wasm, no backend; supported with docker=yes — without Docker you must install Node 22+ yourself)"
     },
     "_copy_without_render": ["_examples/dashboard"]
 }

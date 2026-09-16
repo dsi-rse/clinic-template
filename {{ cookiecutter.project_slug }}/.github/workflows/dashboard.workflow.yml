@@ -13,9 +13,12 @@ on:
     paths:
       - 'dashboard/**'
 
+# One job so the deployed dist/ is byte-identical to the tested dist/ —
+# a second build would re-pull data from a mutable Box link.
 jobs:
-  build-and-test:
+  build-test-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: dashboard
@@ -44,37 +47,18 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run smoke tests
-        run: npm run test:e2e
+        run: npx playwright test
 
-  deploy:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
-    defaults:
-      run:
-        working-directory: dashboard
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node 22
-        uses: actions/setup-node@v4
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: dashboard/package-lock.json
+          name: playwright-report
+          path: dashboard/playwright-report/
 
-      - name: Pull data
-        run: python3 scripts/pull_data.py
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
+      # Fork PRs never reach the secrets: this step is skipped on pull_request.
       - name: Deploy to Cloudflare Pages
+        if: github.event_name != 'pull_request'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

@@ -95,6 +95,11 @@ https://<slug>-dashboard.pages.dev
 
 ### 4. Add datasets via Box
 
+> **Everything in `public/data/` is published to the open internet.**  The
+> build copies it into the deployed site at a guessable public URL.  Only add
+> datasets that are aggregated or de-identified enough to be world-readable —
+> never partner-restricted data.
+
 For each dataset your pipeline produces:
 
 1. Export a parquet file from your pipeline using `export_dataset(df, "name")`

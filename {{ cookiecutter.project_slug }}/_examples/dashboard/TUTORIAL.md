@@ -12,7 +12,11 @@ By the end you will have:
 
 Before you start, make sure you've completed the
 [computer setup guide](https://github.com/dsi-clinic/the-clinic/blob/main/tutorials/clinic-computer-setup.md)
-and have Docker and Make working on your machine.
+and have **Make** plus **Docker** working on your machine.  (The dashboard
+pathway is built and supported for projects generated with `docker=yes`.  If
+your project was generated with `docker=no`, the `dashboard-*` Make targets
+call `npm` directly instead — that path is best-effort and needs **Node 22+**
+installed on your machine.)
 
 ---
 
@@ -33,10 +37,11 @@ queries the parquet files that `make dashboard-data` just placed in
 `public/data/`.
 
 > **Troubleshooting.** If `make dashboard-dev` errors with "Docker not found",
-> make sure Docker Desktop is running. If Node is not installed locally but
-> Docker is, run `make dashboard-install && make dashboard-dev` once to install
-> deps inside the container.  See `dashboard/README.md` for the full command
-> reference.
+> make sure Docker Desktop is running, then run
+> `make dashboard-install && make dashboard-dev` once to install deps inside
+> the container.  If it errors with `npm: not found`, your project was
+> generated with `docker=no` — install Node 22+ (there is no container in that
+> configuration).  See `dashboard/README.md` for the full command reference.
 
 ---
 
@@ -96,13 +101,16 @@ For example, to switch the monthly trend from a line chart to an area chart:
 
 ```tsx
 <PlotFigure
-  options={Plot.plot({
+  options={{
     marks: [
       Plot.areaY(monthly, { x: (d) => new Date(d.month), y: "n" }),
     ],
-  })}
+  }}
 />
 ```
+
+(Note `options` takes the plain spec object — `PlotFigure` calls `Plot.plot()`
+for you.)
 
 `monthly` comes from `useQuery<Row>(sql)`, which returns an array of typed row
 objects.  Look at the existing tab components for the full pattern.
