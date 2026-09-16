@@ -188,16 +188,24 @@ export default function MapPage() {
         const requestLabel =
           requestTypeRef.current === 'All' ? 'All requests' : requestTypeRef.current
         const spark = sparklineSvg(seriesRef.current.get(String(props.name)) ?? [])
-        popup
-          .setLngLat(e.lngLat)
-          .setHTML(
-            `<b>${props.name}</b><br>` +
-              `${METRICS[k].label}: ${METRICS[k].format(Number(props[k]))}<br>` +
-              (spark
-                ? `${spark}<br><span style="color:#52514e">${requestLabel} per month</span>`
-                : ''),
-          )
-          .addTo(map)
+        // Build the popup as DOM, never as an HTML string: setHTML does not
+        // sanitize, so data values (area names, request types) must only ever
+        // reach the popup via textContent.
+        const container = document.createElement('div')
+        const title = document.createElement('b')
+        title.textContent = String(props.name)
+        const metricLine = document.createElement('div')
+        metricLine.textContent = `${METRICS[k].label}: ${METRICS[k].format(Number(props[k]))}`
+        container.append(title, metricLine)
+        if (spark) {
+          const chart = document.createElement('div')
+          chart.innerHTML = spark // numbers-only SVG from sparklineSvg, no data values
+          const caption = document.createElement('span')
+          caption.style.color = '#52514e'
+          caption.textContent = `${requestLabel} per month`
+          container.append(chart, caption)
+        }
+        popup.setLngLat(e.lngLat).setDOMContent(container).addTo(map)
       })
       map.on('mouseleave', 'areas-fill', () => popup.remove())
     }

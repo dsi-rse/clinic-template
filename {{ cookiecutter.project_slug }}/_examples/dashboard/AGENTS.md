@@ -25,6 +25,11 @@ here via `@AGENTS.md`.
   every chart respects the global controls.
 - **Read `data/dictionary/<name>.json` before writing any query.**  Never
   guess column names, types, or value ranges.  The dictionary has everything.
+- **Never interpolate data values into raw HTML.**  MapLibre's
+  `Popup.setHTML()` does not sanitize; a value from the data (an area name, a
+  request type) could carry markup.  Use `setText()`, or build DOM nodes and
+  assign data values with `textContent` before `setDOMContent()`, as
+  `MapPage.tsx` does.
 - **Total parquet in `public/data/` must stay under 150 MB.**  This is
   enforced by `scripts/pull_data.py` (exit 1) and CI.  Do not commit large
   parquet files.
