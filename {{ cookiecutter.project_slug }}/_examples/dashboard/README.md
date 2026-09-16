@@ -59,12 +59,20 @@ not need to do this.
    value of `cookiecutter.project_slug` used when the repo was generated (e.g.
    `my-clinic-project-dashboard`).
 4. Complete the creation wizard — an initial deploy is not required.
+5. **Set the project's production branch to `main`** (Settings → Builds &
+   deployments).  CI deploys with `--branch=main`; if the production branch is
+   anything else, every deploy silently lands on a preview URL and the public
+   `pages.dev` URL never updates.  (If you create the project with the CLI
+   instead, pass `--production-branch=main` — wrangler's default is
+   `production`, not `main`.)
 
 ### 2. Generate a Cloudflare API token
 
 1. In Cloudflare, go to **My Profile → API Tokens → Create Token**.
-2. Use the **Edit Cloudflare Workers** template, then add
-   **Cloudflare Pages: Edit** permission.
+2. Choose **Create Custom Token** with a single permission:
+   **Account → Cloudflare Pages → Edit**.  (Do not use the broader
+   Workers template — this token lives in GitHub secrets, so give it the
+   minimum scope that can deploy Pages.)
 3. Scope the token to your account.
 4. Copy the token — you will only see it once.
 
