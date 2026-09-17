@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 
-// The extract is trimmed to complete years: Chicago migrated 311 systems in
-// late 2018, so later years in this dataset are sparse/partial.
+// The dashboard's chosen demo window. The parquet itself contains 2011–2019:
+// 2018 is a full year (~184k rows) and only 2019 is partial (~12k rows, the
+// city migrated 311 systems) — so this is a display choice, not a data limit.
+// The SQL tab queries the raw extract and will show 2018/2019 rows.
 export const DATA_YEARS = { min: 2011, max: 2017 }
 
 export interface YearRange {

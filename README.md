@@ -52,13 +52,14 @@ For more information on cookiecutter, visit its [git repository](https://github.
 
 ### Dashboard scaffold (`dashboard/`)
 
-The `{{ cookiecutter.project_slug }}/dashboard/` directory is listed in
-`cookiecutter.json` under `_copy_without_render`.  This means cookiecutter
-copies every file in that directory **verbatim** — Jinja expressions are never
-evaluated inside it.
+The `{{ cookiecutter.project_slug }}/_examples/dashboard/` directory is listed
+in `cookiecutter.json` under `_copy_without_render` (as `_examples/dashboard`);
+the post-generation hook copies it to `dashboard/` in generated projects.  This
+means cookiecutter copies every file in that directory **verbatim** — Jinja
+expressions are never evaluated inside it.
 
 **Critical:** never add Jinja syntax (`{{ ... }}`, `{% ... %}`, `${{ ... }}`)
-to any file under `dashboard/`.  Any such expression would be copied literally
+to any file under `_examples/dashboard/`.  Any such expression would be copied literally
 into generated projects, breaking the JavaScript/TypeScript source.  If you
 need to inject a value into a dashboard file at generation time (e.g. the
 project name in `index.html`), use a plain token like `__PROJECT_NAME__` and

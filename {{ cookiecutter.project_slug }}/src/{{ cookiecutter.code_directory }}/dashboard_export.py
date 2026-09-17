@@ -24,8 +24,21 @@ PARQUET_DIR: Path = DASHBOARD_DIR / "public" / "data"
 DICT_DIR: Path = DASHBOARD_DIR / "data" / "dictionary"
 
 
-def describe_dataframe(df: pd.DataFrame) -> dict[str, Any]:
-    """Return a data-dictionary dict for *df* (row count + per-column stats)."""
+def describe_dataframe(
+    df: pd.DataFrame, *, include_samples: bool = False
+) -> dict[str, Any]:
+    """Return a data-dictionary dict for *df* (row count + per-column stats).
+
+    The dictionary files are COMMITTED to git (the parquet is not), so by
+    default no raw row values are included — for partner data, five verbatim
+    samples per column (names, addresses, record IDs) would live in git
+    history forever. Pass ``include_samples=True`` only for data that is safe
+    to publish.
+
+    Args:
+        df: DataFrame to describe.
+        include_samples: Include five verbatim example values per column.
+    """
     columns: dict[str, Any] = {}
     for col in df.columns:
         series = df[col]
@@ -41,7 +54,8 @@ def describe_dataframe(df: pd.DataFrame) -> dict[str, Any]:
             with contextlib.suppress(Exception):
                 entry["min"] = str(series.min())
                 entry["max"] = str(series.max())
-        entry["samples"] = series.dropna().head(5).tolist()
+        if include_samples:
+            entry["samples"] = series.dropna().head(5).tolist()
         columns[col] = entry
     return {"row_count": len(df), "columns": columns}
 
@@ -64,21 +78,32 @@ def _dict_to_markdown(name: str, info: dict[str, Any]) -> str:
     return header + "\n".join(rows) + "\n"
 
 
-def export_dataset(df: pd.DataFrame, name: str) -> None:
+def export_dataset(
+    df: pd.DataFrame, name: str, *, include_samples: bool = False
+) -> None:
     """Write *df* as ``<name>.parquet`` + data dictionary files for the dashboard.
+
+    Tip: sort *df* by its primary time/key column before exporting — sorted
+    data compresses much better and gives each row group tight statistics.
 
     Args:
         df: DataFrame to export.
         name: Dataset name (used as parquet stem and DuckDB view name).
+        include_samples: Put five verbatim example values per column into the
+            COMMITTED data dictionary. Leave False unless the values are safe
+            to publish (see ``describe_dataframe``).
     """
     PARQUET_DIR.mkdir(parents=True, exist_ok=True)
     DICT_DIR.mkdir(parents=True, exist_ok=True)
 
     parquet_path = PARQUET_DIR / f"{name}.parquet"
-    pq.write_table(pa.Table.from_pandas(df), parquet_path)
+    table = pa.Table.from_pandas(df)
+    # zstd + modest row groups: pyarrow's defaults produce a couple of huge
+    # row groups whose statistics prune nothing.
+    pq.write_table(table, parquet_path, compression="zstd", row_group_size=131072)
     print(f"  wrote {parquet_path} ({parquet_path.stat().st_size / 1_048_576:.2f} MB)")
 
-    info = describe_dataframe(df)
+    info = describe_dataframe(df, include_samples=include_samples)
     info["name"] = name
 
     json_path = DICT_DIR / f"{name}.json"

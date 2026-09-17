@@ -10,6 +10,10 @@ export function useQuery<T = Record<string, unknown>>(sql: string) {
 
   useEffect(() => {
     let cancelled = false
+    // A new query must clear any previous error — otherwise one transient
+    // failure would lock error-gated UI on a stale message forever. Previous
+    // data is deliberately kept while loading so charts don't unmount.
+    setError(null)
     if (cache.has(sql)) {
       setData(cache.get(sql) as T[])
       setLoading(false)

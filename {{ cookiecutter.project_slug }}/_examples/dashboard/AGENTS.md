@@ -191,15 +191,24 @@ For Observable Plot documentation, see https://observablehq.com/plot/.
 | `make dashboard-build` | TypeScript compile + production bundle |
 | `make dashboard-data` | Pull parquet files from Box (150 MB gate) |
 | `make dashboard-install` | `npm install` (first-time or after lockfile change) |
-| `npm run test:e2e` | Playwright smoke tests against `vite preview` |
+| `npm run test:e2e` | Playwright smoke tests (build + `vite preview`); needs host Node + one-time `npx playwright install --with-deps chromium` — in docker=yes projects the suite normally runs in CI |
 
 ---
 
 ## Data Budget
 
 - Hard limit: **150 MB** total parquet in `public/data/`.
-- Enforced locally by `scripts/pull_data.py --force` (exit 1 on breach).
+- Enforced on every `scripts/pull_data.py` run (exit 1 on breach); `--force`
+  only controls re-downloading.
+- The pull skips files that already exist, so after a mentor updates a Box
+  file or the manifest, run it with `--force` (or delete the local parquet)
+  to pick up the new data.
 - Enforced in CI before every build.
+- **Over budget?** In order: drop columns no query uses, aggregate to the
+  grain your charts actually plot (this example's charts need ~84k aggregate
+  rows, not 1.6M raw ones), use zstd compression, simplify geometry
+  (`make_sample_geodata.py` shows how), and only sample rows as a last
+  resort — sampling makes every number wrong-by-sampling.
 
 ---
 

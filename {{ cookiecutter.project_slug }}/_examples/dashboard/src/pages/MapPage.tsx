@@ -265,9 +265,19 @@ export default function MapPage() {
         ))}
       </Picker>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, paddingTop: 16 }}>
-        {loading && <p>Loading data…</p>}
-
+      {/* Keep the layout mounted and dim it while filters re-query — the map
+          div must stay in the DOM (MapLibre owns it), and injecting a loading
+          element here would shift the cards around. */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 16,
+          paddingTop: 16,
+          opacity: loading ? 0.6 : 1,
+          transition: 'opacity 0.15s',
+        }}
+      >
         <Card title={`${METRICS[metric].label} by community area — ${subtitle.toLowerCase()}`}>
           <div style={{ position: 'relative' }}>
             <div ref={mapRef} style={{ width: '100%', height: 520 }} />

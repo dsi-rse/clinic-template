@@ -1,6 +1,6 @@
 # reqs_311 — Data Dictionary
 
-Toy sample of Chicago 311 service requests (Chicago Data Portal via the Kaggle 311 archive): 12 request types, 50% random sample, 2011 onward, duplicate-flagged rows removed, sorted by creation_date. `community_area` joins to community_areas.area_num. `status` and `completion_date` are NULL for vacant-building reports (that dataset has no status column). Location columns are dropped to keep the file under Cloudflare Pages' 25 MiB per-asset limit.
+Toy sample of Chicago 311 service requests (Chicago Data Portal via the Kaggle 311 archive): 13 request types, 50% random sample, 2011 onward, duplicate-flagged rows removed, sorted by creation_date. `community_area` joins to community_areas.area_num. `status` and `completion_date` are NULL for vacant-building reports (that dataset has no status column). Location columns are dropped to keep the file under Cloudflare Pages' 25 MiB per-asset limit.
 
 **Rows:** 1605643
 

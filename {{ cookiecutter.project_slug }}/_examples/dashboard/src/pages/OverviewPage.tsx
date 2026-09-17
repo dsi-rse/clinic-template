@@ -85,10 +85,22 @@ export default function OverviewPage() {
   const typeFill = (d: { request_type: string }) =>
     requestType === 'All' || d.request_type === requestType ? ACCENT : DIMMED
 
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, paddingTop: 16 }}>
-      {loading && <p>Loading data…</p>}
+  // Only the very first load has nothing to show. After that, keep the whole
+  // layout mounted and dim it while a filter change re-queries — injecting a
+  // "Loading…" element into the grid would shift everything around.
+  if (loading && !stats) return <p style={{ paddingTop: 16 }}>Loading data…</p>
 
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 16,
+        paddingTop: 16,
+        opacity: loading ? 0.6 : 1,
+        transition: 'opacity 0.15s',
+      }}
+    >
       {s && s.total > 0 && (
         <>
           <StatTile label="Total requests" value={compact.format(s.total)} testId="stat-total" />

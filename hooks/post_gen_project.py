@@ -44,6 +44,7 @@ if use_dashboard:
             "playwright-report",
             "*.parquet",
             "*.parquet.tmp",
+            ".env",
         ),
     )
 

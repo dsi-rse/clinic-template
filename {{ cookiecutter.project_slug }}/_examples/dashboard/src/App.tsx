@@ -1,9 +1,13 @@
+import { lazy, Suspense } from 'react'
 import { Item, Picker, RangeSlider, TabList, TabPanels, Tabs } from '@adobe/react-spectrum'
 import OverviewPage from './pages/OverviewPage'
-import MapPage from './pages/MapPage'
-import SqlPage from './pages/SqlPage'
 import { useQuery } from './lib/useQuery'
 import { useFilters, DATA_YEARS } from './store/filters'
+
+// Lazy-load the heavy tabs so MapLibre isn't downloaded and parsed by
+// visitors who never open them (the Trends tab is the landing view).
+const MapPage = lazy(() => import('./pages/MapPage'))
+const SqlPage = lazy(() => import('./pages/SqlPage'))
 
 export default function App() {
   const { requestType, setRequestType, yearRange, setYearRange } = useFilters()
@@ -66,10 +70,14 @@ export default function App() {
                 <OverviewPage />
               </Item>
               <Item key="map">
-                <MapPage />
+                <Suspense fallback={<p style={{ paddingTop: 16 }}>Loading…</p>}>
+                  <MapPage />
+                </Suspense>
               </Item>
               <Item key="sql">
-                <SqlPage />
+                <Suspense fallback={<p style={{ paddingTop: 16 }}>Loading…</p>}>
+                  <SqlPage />
+                </Suspense>
               </Item>
             </TabPanels>
           </Tabs>

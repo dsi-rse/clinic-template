@@ -13,9 +13,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import socket
 import sys
 import urllib.request
 from pathlib import Path
+
+# urlretrieve has no timeout parameter; without this a stalled Box endpoint
+# hangs forever (in CI, until the job timeout).
+socket.setdefaulttimeout(60)
 
 MAX_TOTAL_MB: int = 150
 MAX_FILE_MIB: int = 25  # Cloudflare Pages rejects any single deploy asset over this

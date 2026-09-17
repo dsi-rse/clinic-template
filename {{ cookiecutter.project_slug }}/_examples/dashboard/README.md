@@ -14,7 +14,7 @@ served.
 | `make dashboard-dev` | Start dev server at http://localhost:5173 |
 | `make dashboard-build` | TypeScript compile + production bundle to `dist/` |
 | `make dashboard-data` | Pull datasets from Box into `public/data/` (150 MB gate) |
-| `npm run test:e2e` | Playwright smoke tests against `vite preview` |
+| `npm run test:e2e` | Playwright smoke tests (build + `vite preview`); needs Node on your machine and a one-time `npx playwright install --with-deps chromium` |
 
 After generating the project, run `make dashboard-data` once to pull the
 example datasets (Chicago 311 requests + community areas) from Box, then
@@ -92,6 +92,10 @@ URL will be:
 ```
 https://<slug>-dashboard.pages.dev
 ```
+
+**Verify the setup now** rather than waiting for a student's push to fail: in
+GitHub go to **Actions → Dashboard CI/CD → Run workflow** (run it from `main`),
+and confirm the run goes green and the URL above serves the dashboard.
 
 ### 4. Add datasets via Box
 

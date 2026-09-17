@@ -73,7 +73,7 @@ def build() -> gpd.GeoDataFrame:
     )
     gdf = gdf.sort_values("area_num").reset_index(drop=True)
 
-    # Simplify + round coordinates so the file stays small (~0.5 MB).
+    # Simplify + round coordinates so the file stays small (~70 KB).
     gdf["geometry"] = shapely.set_precision(gdf.geometry.simplify(0.0001), 1e-5)
     # MapLibre-ready GeoJSON strings; DuckDB-wasm can't decode WKB without
     # the spatial extension, so ship both representations.

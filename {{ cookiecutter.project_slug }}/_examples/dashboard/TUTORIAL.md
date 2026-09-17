@@ -217,7 +217,8 @@ GitHub Actions runs automatically:
 1. Pulls data from Box via `scripts/pull_data.py` (fails fast if total exceeds
    150 MB).
 2. Runs `npm ci && npm run build`.
-3. Runs the Playwright smoke test (both tabs render).
+3. Runs the Playwright smoke tests (all three tabs render; the filter
+   changes the numbers).
 4. Deploys to Cloudflare Pages: `https://<slug>-dashboard.pages.dev`.
 
 The deploy step is skipped on pull requests — PRs only build and test.
@@ -237,7 +238,7 @@ The deploy step is skipped on pull requests — PRs only build and test.
 | `make dashboard-dev` | Dev server at localhost:5173 |
 | `make dashboard-build` | Production build to `dist/` |
 | `make dashboard-data` | Pull parquet files from Box |
-| `npm run test:e2e` | Playwright smoke tests |
+| `npm run test:e2e` | Playwright smoke tests (needs Node + one-time `npx playwright install --with-deps chromium`; in docker=yes projects, CI runs these for you) |
 
 ### Where things live
 

@@ -41,7 +41,14 @@ export default function SqlPage() {
     setError(null)
     const t0 = performance.now()
     try {
-      const result = await query<Row>(text)
+      // Cap SELECT-style queries in SQL: without this, `SELECT * FROM reqs_311`
+      // materializes 1.6M row objects in the browser before the display cap —
+      // enough to crash a tab. DDL statements pass through unwrapped.
+      const trimmed = text.trim().replace(/;+\s*$/, '')
+      const capped = /^\s*(select|with|from|pivot|describe|show|summarize)\b/i.test(trimmed)
+        ? `SELECT * FROM (${trimmed}) LIMIT ${MAX_ROWS + 1}`
+        : trimmed
+      const result = await query<Row>(capped)
       setRows(result)
       setElapsed(performance.now() - t0)
     } catch (e) {
@@ -70,8 +77,9 @@ export default function SqlPage() {
             </span>
           ))}
           {' '}— one per parquet file in <code>public/data/</code>. Column docs live in{' '}
-          <code>data/dictionary/&lt;name&gt;.md</code>. Nothing you run here can break
-          anything: reload the page to reset.
+          <code>data/dictionary/&lt;name&gt;.md</code>. This tab queries the raw extract
+          (2011–2019), unfiltered by the controls above. Nothing you run here can break
+          anything: results are capped at {MAX_ROWS} rows, and a reload resets everything.
         </p>
         <TextArea
           aria-label="SQL query"
@@ -112,7 +120,11 @@ export default function SqlPage() {
 
       {rows && (
         <Card
-          title={`Results — ${rows.length.toLocaleString()} row${rows.length === 1 ? '' : 's'} in ${Math.round(elapsed)} ms${rows.length > MAX_ROWS ? ` (showing first ${MAX_ROWS})` : ''}`}
+          title={`Results — ${
+            rows.length > MAX_ROWS
+              ? `${MAX_ROWS}+ rows (showing first ${MAX_ROWS})`
+              : `${rows.length.toLocaleString()} row${rows.length === 1 ? '' : 's'}`
+          } in ${Math.round(elapsed)} ms`}
           flex="1 1 100%"
         >
           {rows.length === 0 ? (

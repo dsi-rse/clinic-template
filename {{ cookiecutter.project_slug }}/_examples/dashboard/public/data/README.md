@@ -14,9 +14,14 @@ Run `make dashboard-data` to populate this directory.
 
 ## Size limit
 
-Total parquet in this directory must stay **under 150 MB**.  The pull script
-enforces this limit and exits with a non-zero status if it is exceeded.  CI
-also checks the limit before every build.
+Total parquet in this directory must stay **under 150 MB**, and no single file
+over **25 MiB** (Cloudflare Pages rejects larger deploy assets).  The pull
+script enforces both and exits non-zero on a breach.  CI also checks before
+every build.
+
+Over budget?  In order: drop columns no query uses, pre-aggregate to the grain
+your charts actually plot, use zstd compression, simplify geometry, and only
+sample rows as a last resort (sampling makes every number wrong-by-sampling).
 
 ## How to add a dataset
 
