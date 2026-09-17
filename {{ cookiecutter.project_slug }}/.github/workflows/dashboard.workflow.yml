@@ -1,0 +1,69 @@
+{% if cookiecutter.dashboard == 'yes' %}
+{% raw %}
+name: Dashboard CI/CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'dashboard/**'
+  pull_request:
+    paths:
+      - 'dashboard/**'
+
+# One job so the deployed dist/ is byte-identical to the tested dist/ —
+# a second build would re-pull data from a mutable Box link.
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: dashboard
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Pull data
+        run: python3 scripts/pull_data.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: dashboard/playwright-report/
+
+      # Fork PRs never reach the secrets: this step is skipped on pull_request.
+      - name: Deploy to Cloudflare Pages
+        if: github.event_name != 'pull_request'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # --branch makes the target environment explicit: 'main' deploys to
+        # production (the Pages project's production branch must be 'main');
+        # any other ref lands in the preview environment.
+        run: npx --no-install wrangler pages deploy dist --branch=${{ github.ref_name }} --project-name={% endraw %}{{ cookiecutter.project_slug }}-dashboard
+{% endif %}
