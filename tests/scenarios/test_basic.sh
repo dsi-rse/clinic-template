@@ -32,6 +32,14 @@ mkdir -p "$TEST_DIR"
     test_python_version "$PROJECT_DIR" "$PROJECT_SLUG"
     test_package_imports "$PROJECT_DIR" "$PROJECT_SLUG"
     test_source_import "$PROJECT_DIR" "$PROJECT_SLUG" "utils"
+
+    for f in TUTORIAL.md PROJECT_SETUP.md; do
+        if [ -f "$PROJECT_DIR/$f" ]; then
+            echo "   ✗ $f should not exist with examples=no dashboard=no"
+            exit 1
+        fi
+    done
+    echo "   ✓ Root TUTORIAL.md / PROJECT_SETUP.md absent"
     
     print_test_success "$TEST_NAME"
 ) || {

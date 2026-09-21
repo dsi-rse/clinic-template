@@ -124,3 +124,67 @@ fi
 print_test_success "$TEST_NAME"
 
 cleanup_project "$PROJECT_DIR" || true
+
+# ---------------------------------------------------------------------------
+# Scenario 3: dashboard=yes + examples=data-science (unified root docs)
+# ---------------------------------------------------------------------------
+
+TEST_NAME="Dashboard + data-science scaffold (unified docs)"
+PROJECT_NAME="Test Dashboard DS"
+PROJECT_SLUG="test-dashboard-ds"
+PROJECT_DIR="$TEST_DIR/$PROJECT_SLUG"
+
+print_test_header "$TEST_NAME"
+
+cleanup_project "$PROJECT_DIR" || true
+
+set +e
+(
+    set -e
+    create_project "$PROJECT_NAME" \
+        docker="yes" \
+        data_dir="box" \
+        cluster="no" \
+        examples="data-science" \
+        bsd="no" \
+        ann="no" \
+        dashboard="yes"
+
+    cd "$PROJECT_DIR"
+    test_root_docs "Building and Running Your First Strategy" "Data science scaffold"
+    test_root_docs "Building and Extending Your Dashboard" "## Dashboard"
+    for marker in "Step 2b" "Part 1"; do
+        if ! grep -q "$marker" TUTORIAL.md; then
+            echo "   ✗ TUTORIAL.md missing combined-project text: $marker"
+            exit 1
+        fi
+    done
+    if ! grep -q "dashboard_export.py" PROJECT_SETUP.md; then
+        echo "   ✗ PROJECT_SETUP.md missing the pipeline -> dashboard note"
+        exit 1
+    fi
+    echo "   ✓ Unified TUTORIAL.md / PROJECT_SETUP.md contain both parts and the bridge"
+
+    if [ -d "_examples" ]; then
+        echo "   ✗ _examples/ staging directory was not removed"
+        exit 1
+    fi
+    for f in "dashboard/index.html" "src/utils/dashboard_export.py" "src/utils/io.py"; do
+        if [ ! -f "$f" ]; then
+            echo "   ✗ Expected file not found: $f"
+            exit 1
+        fi
+    done
+    echo "   ✓ Dashboard and data-science scaffolds both present"
+)
+STATUS=$?
+set -e
+
+if [ $STATUS -ne 0 ]; then
+    print_test_failure "$TEST_NAME"
+    cleanup_project "$PROJECT_DIR" || true
+    exit 1
+fi
+print_test_success "$TEST_NAME"
+
+cleanup_project "$PROJECT_DIR" || true

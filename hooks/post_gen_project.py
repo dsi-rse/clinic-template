@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from datetime import datetime
 
@@ -50,6 +51,17 @@ if use_dashboard:
 
 # Always remove the staging directory
 shutil.rmtree("_examples")
+
+# Root docs are Jinja-conditional on examples/dashboard; drop them when empty
+for doc in ("PROJECT_SETUP.md", "TUTORIAL.md"):
+    if examples != "data-science" and not use_dashboard:
+        os.remove(doc)
+        continue
+    # Each Jinja block tag leaves an empty line behind; squash the runs
+    with open(doc) as f:
+        text = re.sub(r"\n{3,}", "\n\n", f.read()).strip("\n") + "\n"
+    with open(doc, "w") as f:
+        f.write(text)
 
 if not keep_bsd3:
     os.remove("LICENSE")

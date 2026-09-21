@@ -132,6 +132,34 @@ print(f'   ✓ submitit={submitit.__version__}')
 "
 }
 
+# Root docs are Jinja-conditional; check they rendered and contain the expected
+# section. Args: <TUTORIAL.md marker> <PROJECT_SETUP.md marker>. Runs in cwd.
+test_root_docs() {
+    local tutorial_marker="$1"
+    local setup_marker="$2"
+    echo "   Checking root TUTORIAL.md and PROJECT_SETUP.md..."
+    for f in TUTORIAL.md PROJECT_SETUP.md; do
+        if [ ! -f "$f" ]; then
+            echo "   ✗ Expected file not found: $f"
+            return 1
+        fi
+        if grep -qE "cookiecutter|\{%|endraw" "$f"; then
+            echo "   ✗ Leaked Jinja in $f"
+            grep -nE "cookiecutter|\{%|endraw" "$f"
+            return 1
+        fi
+    done
+    if ! grep -q "$tutorial_marker" TUTORIAL.md; then
+        echo "   ✗ TUTORIAL.md missing section: $tutorial_marker"
+        return 1
+    fi
+    if ! grep -q "$setup_marker" PROJECT_SETUP.md; then
+        echo "   ✗ PROJECT_SETUP.md missing section: $setup_marker"
+        return 1
+    fi
+    echo "   ✓ Root docs rendered with expected sections"
+}
+
 test_examples_data_science() {
     local project_dir="$1"
     local service_name="$2"
@@ -145,6 +173,15 @@ test_examples_data_science() {
         return 1
     fi
     echo "   ✓ _examples/ staging directory removed"
+
+    test_root_docs "Building and Running Your First Strategy" "Data science scaffold"
+    for heading in "Building and Extending Your Dashboard" "## Dashboard"; do
+        if grep -q "$heading" TUTORIAL.md PROJECT_SETUP.md; then
+            echo "   ✗ Dashboard section '$heading' present with dashboard=no"
+            return 1
+        fi
+    done
+    echo "   ✓ No dashboard sections in root docs"
 
     # Every file that should have been copied into src/<module>/
     local expected_files=(
@@ -190,7 +227,8 @@ test_dashboard() {
     local expected_files=(
         "dashboard/index.html"
         "dashboard/README.md"
-        "dashboard/TUTORIAL.md"
+        "TUTORIAL.md"
+        "PROJECT_SETUP.md"
         "dashboard/AGENTS.md"
         "dashboard/CLAUDE.md"
         "dashboard/.gitignore"
@@ -241,6 +279,13 @@ test_dashboard() {
         return 1
     fi
     echo "   ✓ No Jinja leaked into dashboard/"
+
+    test_root_docs "Building and Extending Your Dashboard" "Cloudflare Pages"
+    if grep -q "One-Time Mentor Setup" dashboard/README.md; then
+        echo "   ✗ dashboard/README.md still contains the mentor setup section"
+        return 1
+    fi
+    echo "   ✓ dashboard/README.md defers mentor setup to PROJECT_SETUP.md"
 
     echo "   Checking __PROJECT_NAME__ token replacement..."
     for f in "dashboard/index.html" "dashboard/README.md"; do

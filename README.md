@@ -65,3 +65,14 @@ need to inject a value into a dashboard file at generation time (e.g. the
 project name in `index.html`), use a plain token like `__PROJECT_NAME__` and
 replace it in `hooks/post_gen_project.py` — see the existing replacement block
 there for the pattern.
+
+The dashboard's mentor setup and tutorial do **not** live in
+`_examples/dashboard/`.  They are sections of the root-level, Jinja-rendered
+`{{ cookiecutter.project_slug }}/PROJECT_SETUP.md` and `TUTORIAL.md`, gated on
+`cookiecutter.dashboard` (and `cookiecutter.examples` for the data-science
+sections), so a project with both options gets one unified guide.  The
+dashboard tutorial body contains JSX braces (`options={{ ... }}`), so it is
+wrapped in `{% raw %} ... {% endraw %}` — keep any new dashboard tutorial
+content inside those blocks, and put `{{ cookiecutter.* }}` references outside
+them.  Put each block tag on its own line; the hook collapses the blank
+lines the tags leave behind, so no Jinja whitespace-control markers are needed.
