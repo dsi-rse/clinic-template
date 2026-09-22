@@ -15,6 +15,3 @@ Other instructions:
 - Do not change linting rules unless explcitly asked to.
 - Sign your commits as Claude
 - If you post on GitHub (issues, comments, etc) prepend your post with "Claude says:\n\n" and end it with "\n\nClaude has spoken.".
-
-Keeping the README updated?
-Keeping the Makefile updated?

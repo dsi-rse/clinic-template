@@ -6,13 +6,14 @@ TODO: Fork this to be different if use_cluster.
 - Manage additional dependencies with Docker.
 
 ## Repo structure
-- Core Python code lives in src/{package-name}/
+- Core Python code lives in src/{package-name}/.
 
 ### Runnable Python scripts
-- Runnable scripts live in scripts/
-- Runnable scripts should use argparse
-- Core functionality that is needed for runnable scripts should be imported from {package-name}
-- Scripts should be documented
+- Runnable scripts live in scripts/.
+- Runnable scripts should use argparse.
+- Core functionality that is needed for runnable scripts should be imported from {package-name}.
+- All scripts should be documented in README.md.
+- Scripts that users and developers may have to run regularly should be runnable via a `make` command, specified in the Makefile.
 
 ### Python notebooks
 - Python notebooks live in notebooks/
