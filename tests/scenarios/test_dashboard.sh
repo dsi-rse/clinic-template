@@ -153,6 +153,11 @@ set +e
         bsd="no" \
         ann="no"
 
+    # The dashboard adds pyarrow and dashboard_export.py to the Python side;
+    # make sure the image still resolves and the module imports.
+    build_docker "$PROJECT_DIR"
+    test_source_import "$PROJECT_DIR" "$PROJECT_SLUG" "utils.dashboard_export"
+
     cd "$PROJECT_DIR"
     test_root_docs "Building and Running Your First Strategy" "Data science scaffold"
     test_root_docs "Building and Extending Your Dashboard" "## Dashboard"

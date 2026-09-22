@@ -38,7 +38,7 @@ export default function OverviewPage() {
   // the selected type is highlighted instead.
   const whereAllTypes = filterSql('All', yearRange)
 
-  const { data: stats, loading } = useQuery<{
+  const { data: stats, loading, error } = useQuery<{
     total: number
     completed: number
     // COUNT(status): vacant-building reports have NULL status, so % completed
@@ -89,6 +89,13 @@ export default function OverviewPage() {
   // layout mounted and dim it while a filter change re-queries — injecting a
   // "Loading…" element into the grid would shift everything around.
   if (loading && !stats) return <p style={{ paddingTop: 16 }}>Loading data…</p>
+  if (error) return <p style={{ paddingTop: 16 }}>Query failed: {error.message}</p>
+  // The request-type list spans the whole extract, so some type/year
+  // combinations legitimately have zero rows — say so instead of rendering an
+  // empty grid.
+  if (s && s.total === 0) {
+    return <p style={{ paddingTop: 16 }}>No requests match the current filters.</p>
+  }
 
   return (
     <div

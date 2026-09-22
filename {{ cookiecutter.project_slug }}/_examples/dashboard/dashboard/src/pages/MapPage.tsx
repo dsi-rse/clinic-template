@@ -10,6 +10,7 @@ import { useFilters, filterSql } from '../store/filters'
 
 // Sequential single-hue ramp, light → dark (higher value = darker).
 const RAMP = ['#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b']
+const NO_DATA = '#e6e5e0' // areas with no rows for the metric under the current filters
 const ACCENT = '#2a78d6'
 
 const fmt = (v: number) => Math.round(v).toLocaleString()
@@ -24,21 +25,33 @@ const METRICS = {
 type MetricKey = keyof typeof METRICS
 const METRIC_KEYS = Object.keys(METRICS) as MetricKey[]
 
-type AreaRow = { name: string; geometry_geojson: string } & Record<MetricKey, number>
+// median_days and pct_completed are NULL when no row in the area has a known
+// status / completion date, so "no data" is never confused with 0.
+type AreaRow = { name: string; geometry_geojson: string } & Record<MetricKey, number | null>
 
 function fillExpression(
   key: MetricKey,
   min: number,
   max: number,
 ): string | maplibregl.ExpressionSpecification {
+  // Areas whose metric is null get a neutral no-data color instead of the
+  // bottom of the ramp (which would read as "best").
+  // Null metrics are omitted from the feature properties (see `apply`), so
+  // "no data" is simply the property being absent.
+  const noData: maplibregl.ExpressionSpecification = ['!', ['has', key]]
   if (!(max > min)) {
     // All areas share one value (or there is no data): a ramp is meaningless,
     // and MapLibre silently rejects non-ascending interpolate stops — the map
     // would keep the previous filter's colors. (Also covers NaN.)
-    return RAMP[0]
+    return ['case', noData, NO_DATA, RAMP[0]]
   }
   const stops = RAMP.flatMap((color, i) => [min + ((max - min) * i) / (RAMP.length - 1), color])
-  return ['interpolate', ['linear'], ['get', key], ...stops] as maplibregl.ExpressionSpecification
+  return [
+    'case',
+    noData,
+    NO_DATA,
+    ['interpolate', ['linear'], ['get', key], ...stops],
+  ] as maplibregl.ExpressionSpecification
 }
 
 // Tiny inline-SVG line chart for the hover popup (popup content is an HTML string).
@@ -115,9 +128,11 @@ export default function MapPage() {
   const { data: areas, loading, error } = useQuery<AreaRow>(
     `SELECT ca.name, ca.geometry_geojson,
             CAST(COUNT(r.community_area) AS INT) AS requests,
-            CAST(COALESCE(median(date_diff('day', r.creation_date, r.completion_date)), 0) AS DOUBLE) AS median_days,
-            CAST(COALESCE(100.0 * COUNT(*) FILTER (WHERE r.status = 'Completed')
-                          / NULLIF(COUNT(r.community_area), 0), 0) AS DOUBLE) AS pct_completed
+            CAST(median(date_diff('day', r.creation_date, r.completion_date)) AS DOUBLE) AS median_days,
+            -- Same denominator as the Trends tab: COUNT(r.status) excludes the
+            -- vacant-building reports, whose status is NULL.
+            CAST(100.0 * COUNT(*) FILTER (WHERE r.status = 'Completed')
+                 / NULLIF(COUNT(r.status), 0) AS DOUBLE) AS pct_completed
      FROM community_areas ca
      LEFT JOIN reqs_311 r
        ON r.community_area = ca.area_num AND ${filterSql(requestType, yearRange, 'r.')}
@@ -143,7 +158,7 @@ export default function MapPage() {
     seriesRef.current = byName
   }, [series])
 
-  const values = (areas ?? []).map((a) => a[metric])
+  const values = (areas ?? []).map((a) => a[metric]).filter((v): v is number => v != null)
   const min = Math.min(...values)
   const max = Math.max(...values)
 
@@ -175,7 +190,10 @@ export default function MapPage() {
         features: areas.map((a) => ({
           type: 'Feature' as const,
           geometry: JSON.parse(a.geometry_geojson),
-          properties: Object.fromEntries([['name', a.name], ...METRIC_KEYS.map((k) => [k, a[k]])]),
+          properties: Object.fromEntries([
+            ['name', a.name],
+            ...METRIC_KEYS.flatMap((k) => (a[k] == null ? [] : [[k, a[k]]])),
+          ]),
         })),
       }
       const expr = fillExpression(metric, min, max)
@@ -212,7 +230,8 @@ export default function MapPage() {
         const title = document.createElement('b')
         title.textContent = String(props.name)
         const metricLine = document.createElement('div')
-        metricLine.textContent = `${METRICS[k].label}: ${METRICS[k].format(Number(props[k]))}`
+        const value = props[k] == null ? 'no data' : METRICS[k].format(Number(props[k]))
+        metricLine.textContent = `${METRICS[k].label}: ${value}`
         container.append(title, metricLine)
         if (spark) {
           const chart = document.createElement('div')
@@ -246,10 +265,10 @@ export default function MapPage() {
     )
   }
 
-  const top15 = [...(areas ?? [])]
-    .sort((a, b) => b[metric] - a[metric])
+  const top15 = (areas ?? [])
+    .flatMap((a) => (a[metric] == null ? [] : [{ name: a.name, value: a[metric] }]))
+    .sort((a, b) => b.value - a.value)
     .slice(0, 15)
-    .map((a) => ({ name: a.name, value: a[metric] }))
 
   const subtitle = requestType === 'All' ? 'All 311 requests' : requestType
 
@@ -281,7 +300,7 @@ export default function MapPage() {
         <Card title={`${METRICS[metric].label} by community area — ${subtitle.toLowerCase()}`}>
           <div style={{ position: 'relative' }}>
             <div ref={mapRef} style={{ width: '100%', height: 520 }} />
-            {areas && areas.length > 0 && (
+            {values.length > 0 && (
               <MapLegend min={min} max={max} format={METRICS[metric].format} />
             )}
           </div>

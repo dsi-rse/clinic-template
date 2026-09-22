@@ -29,6 +29,12 @@ type Row = Record<string, unknown>
 
 const isNumeric = (v: unknown) => typeof v === 'number' || typeof v === 'bigint'
 
+const formatCell = (v: unknown) => {
+  if (v == null) return 'NULL'
+  if (v instanceof Date) return v.toISOString().replace('T', ' ').slice(0, 19)
+  return String(v)
+}
+
 export default function SqlPage() {
   const [sql, setSql] = useState(DEFAULT_SQL)
   const [rows, setRows] = useState<Row[] | null>(null)
@@ -164,7 +170,7 @@ export default function SqlPage() {
                             color: row[c] == null ? '#898781' : '#0b0b0b',
                           }}
                         >
-                          {row[c] == null ? 'NULL' : String(row[c])}
+                          {formatCell(row[c])}
                         </td>
                       ))}
                     </tr>

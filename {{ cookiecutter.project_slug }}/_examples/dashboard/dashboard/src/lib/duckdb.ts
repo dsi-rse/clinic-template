@@ -18,6 +18,8 @@ function getDB(): Promise<duckdb.AsyncDuckDB> {
       const logger = new duckdb.ConsoleLogger()
       const db = new duckdb.AsyncDuckDB(logger, worker)
       await db.instantiate(bundle.mainModule)
+      // Return TIMESTAMP/DATE columns as JS Dates instead of epoch numbers.
+      await db.open({ query: { castTimestampToDate: true } })
 
       const conn = await db.connect()
 

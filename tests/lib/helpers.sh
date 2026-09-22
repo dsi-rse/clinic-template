@@ -281,6 +281,15 @@ test_dashboard() {
     echo "   ✓ No Jinja leaked into dashboard/"
 
     test_root_docs "Building and Extending Your Dashboard" "Cloudflare Pages"
+    # The data-science sections nest inside the dashboard block; a loosened
+    # gate would hand dashboard-only students a Step 2b about modules they lack.
+    for heading in "Building and Running Your First Strategy" "Data science scaffold" "Step 2b" "Part 1"; do
+        if grep -q "$heading" TUTORIAL.md PROJECT_SETUP.md; then
+            echo "   ✗ Data-science section '$heading' present with examples=dashboard"
+            return 1
+        fi
+    done
+    echo "   ✓ No data-science sections in root docs"
     if grep -q "One-Time Mentor Setup" dashboard/README.md; then
         echo "   ✗ dashboard/README.md still contains the mentor setup section"
         return 1

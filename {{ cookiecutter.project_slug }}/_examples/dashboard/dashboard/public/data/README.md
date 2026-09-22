@@ -33,9 +33,10 @@ sample rows as a last resort (sampling makes every number wrong-by-sampling).
 2. Upload to Box, get the static link, add it to `data.manifest.json`.
 3. Run `make dashboard-data` to pull it locally.
 
-Each parquet file is automatically registered as a DuckDB view named after the
-file stem.  A file named `my_dataset.parquet` becomes the view `my_dataset`
-and can be queried immediately with `SELECT * FROM my_dataset`.
+Each entry in `data.manifest.json` is registered as a DuckDB view named after
+its `name`.  A file that only exists locally so far still needs an entry — use
+an empty URL (`{ "name": "my_dataset", "url": "" }`; `pull_data.py` skips it)
+and it can be queried with `SELECT * FROM my_dataset`.
 
 ## .gitignore
 

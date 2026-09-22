@@ -505,7 +505,8 @@ installed on your machine.)
 
 ## Step 1: Run It
 
-Pull the example datasets from Box, then start the dev server:
+From a terminal on your machine (not inside a Docker container), pull the
+example datasets from Box, then start the dev server:
 
 ```bash
 make dashboard-data
@@ -553,7 +554,8 @@ column).  Their full schemas live in `data/dictionary/`.
 **For real project data**, the workflow is:
 
 1. In your pipeline, call `export_dataset(df, "my_dataset")` from
-   `src/<module>/dashboard_export.py`.  This writes
+   `src/<module>/dashboard_export.py` (project root, not `dashboard/src/`).
+   This writes
    `dashboard/public/data/my_dataset.parquet` and a data dictionary to
    `dashboard/data/dictionary/my_dataset.{json,md}`.
 2. Upload the parquet to Box and copy the **direct-download** static link.
@@ -564,8 +566,9 @@ column).  Their full schemas live in `data/dictionary/`.
 4. Run `make dashboard-data` to pull the file into `public/data/`.
 
 The data dictionary (committed JSON + Markdown) documents every column's type,
-null count, unique-value count, and sample values.  Hand it to an LLM instead
-of pasting raw data — see Step 5.
+null count, unique-value count, and range (plus sample values if you export
+with `include_samples=True` — off by default, since dictionaries are committed
+to git).  Hand it to an LLM instead of pasting raw data — see Step 5.
 
 **DuckDB views** — every manifest entry is registered at startup as a view
 named after the file stem.  A query like `SELECT * FROM reqs_311 LIMIT 5` or
@@ -590,11 +593,20 @@ export_dataset(results_df.reset_index(), "results")
 they become queryable.)
 
 This writes `dashboard/public/data/results.parquet` and a data dictionary to
-`dashboard/data/dictionary/results.{json,md}`.  Run `make dashboard-dev`, open
-the **SQL** tab, and query it: `SELECT * FROM results LIMIT 10`.
+`dashboard/data/dictionary/results.{json,md}`.  The dashboard only creates a
+view for datasets listed in `dashboard/data.manifest.json`, so add an entry
+with an empty URL for now (`pull_data.py` skips entries with no URL):
+
+```json
+{ "name": "results", "url": "" }
+```
+
+Then, in a terminal on your machine (not the container shell from Part 1), run
+`make dashboard-dev`, open the **SQL** tab, and query it:
+`SELECT * FROM results LIMIT 10`.
 
 The parquet is git-ignored, so teammates and CI won't see it yet.  Ask your
-mentor to upload it to Box and add it to `data.manifest.json` (project-root
+mentor to upload it to Box and fill in the `url` (project-root
 `PROJECT_SETUP.md`, Dashboard step 4).  After that, `make dashboard-data`
 pulls it for everyone.
 
@@ -606,88 +618,137 @@ pulls it for everyone.
 
 ## Step 3: Change a Chart
 
-Open `src/pages/OverviewPage.tsx`.  Find the `<PlotFigure options={...} />`
-block.  The `options` prop is a plain
-[Observable Plot](https://observablehq.com/plot/) spec — change it and the
+Open `src/pages/OverviewPage.tsx` and find the **Requests per month** card: the
+`<PlotFigure options={{ ... }} />` whose `marks` array holds a `Plot.areaY`, a
+`Plot.lineY`, and a `Plot.ruleY`.  The `options` prop is a plain
+[Observable Plot](https://observablehq.com/plot/) spec — edit it, save, and the
 browser hot-reloads.
 
-For example, to switch the monthly trend from a line chart to an area chart:
+Try two edits:
 
-```tsx
-<PlotFigure
-  options={{
-    marks: [
-      Plot.areaY(monthly, { x: (d) => new Date(d.month), y: "n" }),
-    ],
-  }}
-/>
-```
+1. **Make it a step chart.**  Inside the `Plot.lineY(monthly, { ... })` options,
+   add a line next to `strokeWidth: 2,`:
 
-(Note `options` takes the plain spec object — `PlotFigure` calls `Plot.plot()`
-for you.)
+   ```tsx
+   curve: 'step',
+   ```
 
-`monthly` comes from `useQuery<Row>(sql)`, which returns an array of typed row
-objects.  Look at the existing tab components for the full pattern.
+2. **Add a dot for each month.**  Marks draw in array order, so add this after
+   the `Plot.lineY(...)` entry and before `Plot.ruleY([0])`:
+
+   ```tsx
+   Plot.dot(monthly, {
+     x: (d: { month: string }) => new Date(d.month),
+     y: 'n',
+     fill: ACCENT,
+   }),
+   ```
+
+`options` takes the plain spec object — `PlotFigure` calls `Plot.plot()` for
+you.  `monthly` is the result of the `useQuery<...>(sql)` call near the top of
+the file: an array of typed row objects, one per month.
 
 > **Where do column names come from?** Read
 > `data/dictionary/reqs_311.json` — it lists every column with its type and
-> sample values.  Never guess column names; always check the dictionary first.
+> value ranges.  Never guess column names; always check the dictionary first.
 
 ---
 
 ## Step 4: Add a Filter
 
-Filters that need to persist across tabs live in the Zustand store at
-`src/store/filters.ts`.  This is the single source of truth for all UI state.
+You will add a **Status** picker (Completed / Open) next to the existing
+request-type picker, and make every chart respect it.  Filters that apply
+across tabs live in the Zustand store at `src/store/filters.ts`; every chart
+builds its SQL `WHERE` clause with the `filterSql()` helper in the same file.
+That is the whole trick: add the filter to the store and to `filterSql`, and
+every chart picks it up.
 
-**1. Extend the store.**  Open `src/store/filters.ts` and add your field:
+**1. Extend the store.**  In `src/store/filters.ts`, add two fields to the
+`FiltersState` interface and two entries to the `create(...)` call, following
+the pattern of `requestType` / `setRequestType`:
 
 ```ts
 interface FiltersState {
-  requestType: string;    // existing field
-  setRequestType: (t: string) => void;
-  status: string;         // ← add this
-  setStatus: (s: string) => void;
+  // ...existing fields...
+  status: string
+  setStatus: (status: string) => void
 }
 
-export const useFilters = create<FiltersState>()((set) => ({
-  requestType: "All",
-  setRequestType: (requestType) => set({ requestType }),
-  status: "All",          // ← add this
+export const useFilters = create<FiltersState>((set) => ({
+  // ...existing fields...
+  status: 'All',
   setStatus: (status) => set({ status }),
-}));
+}))
 ```
 
-**2. Wire up a Spectrum picker** in your tab (derive the options from a
-`SELECT DISTINCT` query, as `OverviewPage.tsx` does — never hardcode values):
+**2. Teach `filterSql` about it.**  Same file.  Add a `status` parameter after
+`yearRange`, and a clause for it after the existing `requestType` clause:
+
+```ts
+export function filterSql(
+  requestType: string,
+  { start, end }: YearRange,
+  status: string,
+  prefix = '',
+): string {
+  // ...existing clauses...
+  if (status !== 'All') {
+    clauses.push(`${prefix}status = '${status.replaceAll("'", "''")}'`)
+  }
+  return clauses.join(' AND ')
+}
+```
+
+Save, and TypeScript flags every caller of `filterSql` — there are four, in
+`src/pages/OverviewPage.tsx` and `src/pages/MapPage.tsx`.  That is exactly the
+list of places the new filter has to reach.
+
+**3. Update the callers.**  In each of those two files, read `status` from the
+store and pass it through:
+
+```ts
+// OverviewPage.tsx
+const { requestType, yearRange, status } = useFilters()
+const where = filterSql(requestType, yearRange, status)
+const whereAllTypes = filterSql('All', yearRange, status)
+```
+
+```ts
+// MapPage.tsx — `status` joins the existing useFilters() destructure, and both
+// filterSql calls gain it before the 'r.' prefix:
+filterSql(requestType, yearRange, status, 'r.')
+```
+
+**4. Add the picker.**  In `src/App.tsx`, read `status` and `setStatus` from
+`useFilters()` alongside the existing fields, then query the options.  Options
+always come from the data, never from a hardcoded list.  Vacant-building
+reports have a `NULL` status (see `data/dictionary/reqs_311.json`), so leave
+those out:
 
 ```tsx
-const { status, setStatus } = useFilters();
+const { data: statusRows } = useQuery<{ status: string }>(
+  'SELECT DISTINCT status FROM reqs_311 WHERE status IS NOT NULL ORDER BY status',
+)
+const statuses = ['All', ...(statusRows ?? []).map((r) => r.status)]
+```
 
-<Picker
-  label="Status"
-  selectedKey={status}
-  onSelectionChange={(k) => setStatus(String(k))}
->
+Then add the picker right after the `<RangeSlider ... />`, inside the same
+controls `<div>`:
+
+```tsx
+<Picker label="Status" selectedKey={status} onSelectionChange={(key) => setStatus(String(key))}>
   {statuses.map((s) => (
     <Item key={s}>{s}</Item>
   ))}
 </Picker>
 ```
 
-**3. Use it in your SQL query:**
+Save.  A Status picker appears; choose **Open** and the stat tiles, the trend
+chart, and the map all update together.  (The **Completed** tile drops to 0%
+— every request in view is open.)
 
-```ts
-const sql =
-  status === "All"
-    ? "SELECT * FROM reqs_311"
-    : `SELECT * FROM reqs_311 WHERE status = '${status}'`;
-
-const { data } = useQuery<Row>(sql);
-```
-
-Any other tab that calls `useFilters()` will see the same `status` value —
-that is how the global request-type picker applies to both the Trends and Map tabs.
+The SQL tab is the one exception: it runs whatever you type, so the global
+filters do not apply there.
 
 ---
 
@@ -702,8 +763,9 @@ Adding a full tab is a good task to hand to an LLM.  Prepare two files:
 Then prompt your agent:
 
 > Read `dashboard/AGENTS.md` and `dashboard/data/dictionary/reqs_311.json`.
-> Create `src/pages/StatusTab.tsx` that shows a line chart of monthly request
-> counts broken down by `status`.  Add it as a new tab in `src/App.tsx`.
+> Create `dashboard/src/pages/StatusTab.tsx` that shows a line chart of monthly
+> request counts broken down by `status`.  Add it as a new tab in
+> `dashboard/src/App.tsx`.
 
 The agent has everything it needs: the rules, the column types, the patterns
 from `OverviewPage.tsx` and `MapPage.tsx`, and the `useQuery` / `PlotFigure`

@@ -143,7 +143,7 @@ https://{{ cookiecutter.project_slug }}-dashboard.pages.dev
 
 For each dataset your pipeline produces:
 
-1. Export a parquet file from your pipeline using `export_dataset(df, "name")` in `src/{{ cookiecutter.code_directory }}/dashboard_export.py`.
+1. Export a parquet file from your pipeline using `export_dataset(df, "name")` in `src/{{ cookiecutter.code_directory }}/dashboard_export.py` (project root, not `dashboard/src/`).
 2. Upload the parquet to the project's Box folder.
 3. In Box, open the file, click **Share → Create shared link**, set access to **People with the link** (anything more restrictive returns a login page instead of the file, which breaks `pull_data.py` and CI), and set the **link expiration** far in the future (an expired link breaks every student's `make dashboard-data` and the CI deploy).  Copy the **direct download** URL.  It will look like:
    ```
@@ -159,7 +159,7 @@ For each dataset your pipeline produces:
 Students can then run `make dashboard-data` to pull the datasets whenever they set up the project.
 {% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}
 
-The Box folder for dashboard parquet files can be the same `dsi-core/clinic/{{ cookiecutter.project_slug }}` folder you created in the data science section above.  The pipeline's evaluation outputs are the natural first dataset: call `export_dataset(results_df, "results")` from `src/{{ cookiecutter.code_directory }}/dashboard_export.py` and follow the steps above.
+The Box folder for dashboard parquet files can be the same `dsi-core/clinic/{{ cookiecutter.project_slug }}` folder you created in the data science section above.  The pipeline's evaluation outputs are the natural first dataset: call `export_dataset(results_df, "results")` from the project-root `src/{{ cookiecutter.code_directory }}/dashboard_export.py` and follow the steps above.
 {% endif %}
 
 ---

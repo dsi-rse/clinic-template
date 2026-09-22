@@ -152,34 +152,27 @@ For Observable Plot documentation, see https://observablehq.com/plot/.
 
 ## How to Add a Filter
 
-1. Add a field and setter to `FiltersState` in `src/store/filters.ts`:
+Global filters live in `src/store/filters.ts` and reach every chart through
+`filterSql()`.  Do not build a local `WHERE` for a filter that should apply
+across tabs.
+
+1. Add the field and setter to `FiltersState` and to the `create` call:
 
    ```ts
-   status: string;
-   setStatus: (s: string) => void;
-   ```
-
-2. Initialise it in the `create` call (same file):
-
-   ```ts
-   status: "All",
+   status: string
+   setStatus: (status: string) => void
+   // ...
+   status: 'All',
    setStatus: (status) => set({ status }),
    ```
 
-3. In any page, read and set it:
+2. Add a parameter and clause to `filterSql` (escape single quotes as the
+   existing `requestType` clause does), then update its callers in
+   `OverviewPage.tsx` and `MapPage.tsx` — TypeScript lists them for you.
 
-   ```tsx
-   const { status, setStatus } = useFilters();
-   ```
-
-4. Include the value in your SQL `WHERE` clause:
-
-   ```ts
-   const sql =
-     status === "All"
-       ? "SELECT * FROM reqs_311"
-       : `SELECT * FROM reqs_311 WHERE status = '${status}'`;
-   ```
+3. Add the control to the controls row in `App.tsx`, next to the request-type
+   `Picker`.  Derive its options with a `SELECT DISTINCT` query; check
+   `data/dictionary/<name>.json` for `NULL`s to exclude.
 
 ---
 
@@ -232,8 +225,9 @@ years in the extract are partial.  Summary:
 82% of the file size, and every deploy asset must stay under 25 MiB.)
 
 For any dataset you add, read `data/dictionary/<name>.json` — the structure is
-the same: one entry per column with `dtype`, `nulls`, `n_unique`, `min`,
-`max`, and `samples`.
+the same: one entry per column with `dtype`, `nulls`, `n_unique`, `min`, and
+`max`, plus `samples` only if the dataset was exported with
+`include_samples=True` (off by default: dictionaries are committed to git).
 
 ## The community_areas Dataset (GeoParquet)
 
