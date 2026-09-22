@@ -14,7 +14,7 @@ services:
     # At least one of stdin_open or tty is required to make devcontainer work
     stdin_open: true
     tty: true
-  {% if cookiecutter.dashboard == 'yes' %}
+  {% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}
   dashboard:
     image: node:22-slim
     volumes:
@@ -36,7 +36,7 @@ services:
     profiles: ["tools"]
     command: python3 scripts/pull_data.py
   {% endif %}
-{% if cookiecutter.dashboard == 'yes' %}
+{% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}
 volumes:
   dashboard_node_modules:
 {% endif %}

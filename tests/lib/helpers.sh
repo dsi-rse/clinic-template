@@ -177,7 +177,7 @@ test_examples_data_science() {
     test_root_docs "Building and Running Your First Strategy" "Data science scaffold"
     for heading in "Building and Extending Your Dashboard" "## Dashboard"; do
         if grep -q "$heading" TUTORIAL.md PROJECT_SETUP.md; then
-            echo "   ✗ Dashboard section '$heading' present with dashboard=no"
+            echo "   ✗ Dashboard section '$heading' present with examples=data-science"
             return 1
         fi
     done

@@ -6,7 +6,7 @@ Most of these tasks are good candidates for an AI coding agent (Cursor, Codex, e
 
 ---
 
-{% if cookiecutter.examples == 'data-science' %}
+{% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}
 ## Data science scaffold
 
 ### 1. Set up the data on Box
@@ -100,7 +100,7 @@ If that works, go through the tutorial yourself to see if you run into any issue
 ---
 
 {% endif %}
-{% if cookiecutter.dashboard == 'yes' %}
+{% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}
 ## Dashboard
 
 Complete these steps once per project before the first deploy.  Students do not need to do this.  File paths in this section are relative to `dashboard/`.
@@ -157,7 +157,7 @@ For each dataset your pipeline produces:
 6. Commit `data.manifest.json` and the updated `data/dictionary/` files (not the parquet itself).
 
 Students can then run `make dashboard-data` to pull the datasets whenever they set up the project.
-{% if cookiecutter.examples == 'data-science' %}
+{% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}
 
 The Box folder for dashboard parquet files can be the same `dsi-core/clinic/{{ cookiecutter.project_slug }}` folder you created in the data science section above.  The pipeline's evaluation outputs are the natural first dataset: call `export_dataset(results_df, "results")` from `src/{{ cookiecutter.code_directory }}/dashboard_export.py` and follow the steps above.
 {% endif %}

@@ -35,7 +35,7 @@ mkdir -p "$TEST_DIR"
 
     for f in TUTORIAL.md PROJECT_SETUP.md; do
         if [ -f "$PROJECT_DIR/$f" ]; then
-            echo "   ✗ $f should not exist with examples=no dashboard=no"
+            echo "   ✗ $f should not exist with examples=no"
             exit 1
         fi
     done

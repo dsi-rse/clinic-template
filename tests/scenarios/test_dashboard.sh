@@ -1,5 +1,5 @@
 #!/bin/bash
-# Test: Dashboard scaffold (dashboard=yes and dashboard=no scenarios)
+# Test: Dashboard scaffold (examples=dashboard, examples=no, examples=data-science-and-dashboard)
 
 set -e
 
@@ -7,10 +7,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/../lib/helpers.sh"
 
 # ---------------------------------------------------------------------------
-# Scenario 1: dashboard=yes
+# Scenario 1: examples=dashboard
 # ---------------------------------------------------------------------------
 
-TEST_NAME="Dashboard scaffold (dashboard=yes)"
+TEST_NAME="Dashboard scaffold (examples=dashboard)"
 PROJECT_NAME="Test Dashboard Yes"
 PROJECT_SLUG="test-dashboard-yes"
 PROJECT_DIR="$TEST_DIR/$PROJECT_SLUG"
@@ -29,10 +29,9 @@ set +e
         docker="yes" \
         data_dir="none" \
         cluster="no" \
-        examples="no" \
+        examples="dashboard" \
         bsd="no" \
-        ann="no" \
-        dashboard="yes"
+        ann="no"
 
     test_dashboard "$PROJECT_DIR" "$PROJECT_NAME" "$PROJECT_SLUG" "utils"
 )
@@ -49,10 +48,10 @@ print_test_success "$TEST_NAME"
 cleanup_project "$PROJECT_DIR" || true
 
 # ---------------------------------------------------------------------------
-# Scenario 2: dashboard=no
+# Scenario 2: examples=no
 # ---------------------------------------------------------------------------
 
-TEST_NAME="Dashboard scaffold (dashboard=no)"
+TEST_NAME="Dashboard scaffold (examples=no)"
 PROJECT_NAME="Test Dashboard No"
 PROJECT_SLUG="test-dashboard-no"
 PROJECT_DIR="$TEST_DIR/$PROJECT_SLUG"
@@ -70,26 +69,31 @@ set +e
         cluster="no" \
         examples="no" \
         bsd="no" \
-        ann="no" \
-        dashboard="no"
+        ann="no"
 
     echo "   Checking dashboard/ is absent..."
     if [ -d "$PROJECT_DIR/dashboard" ]; then
-        echo "   ✗ dashboard/ directory should not exist when dashboard=no"
+        echo "   ✗ dashboard/ directory should not exist when examples=no"
         exit 1
     fi
     echo "   ✓ dashboard/ directory absent"
 
     echo "   Checking dashboard workflow is absent..."
     if [ -f "$PROJECT_DIR/.github/workflows/dashboard.workflow.yml" ]; then
-        echo "   ✗ dashboard.workflow.yml should not exist when dashboard=no"
+        echo "   ✗ dashboard.workflow.yml should not exist when examples=no"
         exit 1
     fi
     echo "   ✓ dashboard.workflow.yml absent"
 
+    if [ ! -f "$PROJECT_DIR/.github/workflows/main.workflow.yml" ]; then
+        echo "   ✗ main.workflow.yml should still exist when examples=no"
+        exit 1
+    fi
+    echo "   ✓ main.workflow.yml present"
+
     echo "   Checking dashboard_export.py is absent..."
     if [ -f "$PROJECT_DIR/src/utils/dashboard_export.py" ]; then
-        echo "   ✗ dashboard_export.py should not exist when dashboard=no"
+        echo "   ✗ dashboard_export.py should not exist when examples=no"
         exit 1
     fi
     echo "   ✓ dashboard_export.py absent"
@@ -126,7 +130,7 @@ print_test_success "$TEST_NAME"
 cleanup_project "$PROJECT_DIR" || true
 
 # ---------------------------------------------------------------------------
-# Scenario 3: dashboard=yes + examples=data-science (unified root docs)
+# Scenario 3: examples=data-science-and-dashboard (unified root docs)
 # ---------------------------------------------------------------------------
 
 TEST_NAME="Dashboard + data-science scaffold (unified docs)"
@@ -145,10 +149,9 @@ set +e
         docker="yes" \
         data_dir="box" \
         cluster="no" \
-        examples="data-science" \
+        examples="data-science-and-dashboard" \
         bsd="no" \
-        ann="no" \
-        dashboard="yes"
+        ann="no"
 
     cd "$PROJECT_DIR"
     test_root_docs "Building and Running Your First Strategy" "Data science scaffold"

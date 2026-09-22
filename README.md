@@ -52,25 +52,30 @@ For more information on cookiecutter, visit its [git repository](https://github.
 
 ### Dashboard scaffold (`dashboard/`)
 
-The `{{ cookiecutter.project_slug }}/_examples/dashboard/` directory is listed
-in `cookiecutter.json` under `_copy_without_render` (as `_examples/dashboard`);
-the post-generation hook copies it to `dashboard/` in generated projects.  This
-means cookiecutter copies every file in that directory **verbatim** — Jinja
-expressions are never evaluated inside it.
+`{{ cookiecutter.project_slug }}/_examples/dashboard/` follows the same pattern
+as `_examples/data_science/`: it mirrors the generated project root and the
+post-generation hook copies it over `.` when `examples` is `dashboard` or
+`data-science-and-dashboard`.  Its `src/` and
+`.github/` contents (`dashboard_export.py`, the CI workflow) are ordinary
+Jinja-rendered template files.
+
+The one exception is the Vite app itself, `_examples/dashboard/dashboard/`,
+which is listed in `cookiecutter.json` under `_copy_without_render`.
+Cookiecutter copies every file in that subtree **verbatim** — Jinja expressions
+are never evaluated inside it, because JSX uses the same `{{ ... }}` braces.
 
 **Critical:** never add Jinja syntax (`{{ ... }}`, `{% ... %}`, `${{ ... }}`)
-to any file under `_examples/dashboard/`.  Any such expression would be copied literally
-into generated projects, breaking the JavaScript/TypeScript source.  If you
-need to inject a value into a dashboard file at generation time (e.g. the
-project name in `index.html`), use a plain token like `__PROJECT_NAME__` and
-replace it in `hooks/post_gen_project.py` — see the existing replacement block
-there for the pattern.
+to any file under `_examples/dashboard/dashboard/`.  Any such expression would
+be copied literally into generated projects, breaking the JavaScript/TypeScript
+source.  If you need to inject a value into one of those files at generation
+time (e.g. the project name in `index.html`), use a plain token like
+`__PROJECT_NAME__` and replace it in `hooks/post_gen_project.py` — see the
+existing replacement block there for the pattern.
 
-The dashboard's mentor setup and tutorial do **not** live in
-`_examples/dashboard/`.  They are sections of the root-level, Jinja-rendered
-`{{ cookiecutter.project_slug }}/PROJECT_SETUP.md` and `TUTORIAL.md`, gated on
-`cookiecutter.dashboard` (and `cookiecutter.examples` for the data-science
-sections), so a project with both options gets one unified guide.  The
+The dashboard's mentor setup and tutorial live in the root-level, Jinja-rendered
+`{{ cookiecutter.project_slug }}/PROJECT_SETUP.md` and `TUTORIAL.md`, with
+sections gated on `cookiecutter.examples`, so `data-science-and-dashboard`
+gets one unified guide.  The
 dashboard tutorial body contains JSX braces (`options={{ ... }}`), so it is
 wrapped in `{% raw %} ... {% endraw %}` — keep any new dashboard tutorial
 content inside those blocks, and put `{{ cookiecutter.* }}` references outside

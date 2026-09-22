@@ -10,7 +10,8 @@ use_local_data_dir = "{{ cookiecutter.data_dir }}" in ["local", "github"]
 examples = "{{ cookiecutter.examples }}"
 keep_bsd3 = f"{{ cookiecutter.bsd }}" == "yes"
 use_annotations = f"{{ cookiecutter.ann }}" == "yes"
-use_dashboard = "{{ cookiecutter.dashboard }}" == "yes"
+use_data_science = examples in ("data-science", "data-science-and-dashboard")
+use_dashboard = examples in ("dashboard", "data-science-and-dashboard")
 
 if not use_cluster:
     shutil.rmtree("config")
@@ -26,23 +27,27 @@ if not use_local_data_dir:
     os.remove("data/README.md")
     os.rmdir("data")
 
-if examples != "no":
-    # Copy chosen example set into project root
-    shutil.copytree(
-        f"_examples/{examples.replace('-', '_')}", ".", dirs_exist_ok=True
-    )
-
+# Each example set mirrors the project root; copy the chosen ones over it.
+# Ignore local build artifacts that may exist when generating from a working
+# checkout of the template (they are git-ignored, not committed).
+example_sets = []
+if examples == "generic":
+    example_sets.append("generic")
+if use_data_science:
+    example_sets.append("data_science")
 if use_dashboard:
-    # Ignore local build artifacts that may exist when generating from a
-    # working checkout of the template (they are git-ignored, not committed).
+    example_sets.append("dashboard")
+for name in example_sets:
     shutil.copytree(
-        "_examples/dashboard",
-        "dashboard",
+        f"_examples/{name}",
+        ".",
+        dirs_exist_ok=True,
         ignore=shutil.ignore_patterns(
             "node_modules",
             "dist",
             "test-results",
             "playwright-report",
+            ".wrangler",
             "*.parquet",
             "*.parquet.tmp",
             ".env",
@@ -54,7 +59,7 @@ shutil.rmtree("_examples")
 
 # Root docs are Jinja-conditional on examples/dashboard; drop them when empty
 for doc in ("PROJECT_SETUP.md", "TUTORIAL.md"):
-    if examples != "data-science" and not use_dashboard:
+    if not use_data_science and not use_dashboard:
         os.remove(doc)
         continue
     # Each Jinja block tag leaves an empty line behind; squash the runs
@@ -89,15 +94,8 @@ if not use_annotations:
     with open("pyproject.toml", "w") as f:
         f.writelines(new_text_lines)
 
-if not use_dashboard:
-    workflow = ".github/workflows/dashboard.workflow.yml"
-    if os.path.exists(workflow):
-        os.remove(workflow)
-    export_py = "src/{{ cookiecutter.code_directory }}/dashboard_export.py"
-    if os.path.exists(export_py):
-        os.remove(export_py)
-else:
-    # Replace __PROJECT_NAME__ token in unrendered files
+if use_dashboard:
+    # dashboard/ is copied without rendering (JSX braces); inject the name here
     project_name = "{{ cookiecutter.project_name }}"
     token_files = [
         "dashboard/index.html",

@@ -1,4 +1,3 @@
-{% if cookiecutter.dashboard == 'yes' %}
 {% raw %}
 name: Dashboard CI/CD
 
@@ -66,4 +65,3 @@ jobs:
         # production (the Pages project's production branch must be 'main');
         # any other ref lands in the preview environment.
         run: npx --no-install wrangler pages deploy dist --branch=${{ github.ref_name }} --project-name={% endraw %}{{ cookiecutter.project_slug }}-dashboard
-{% endif %}

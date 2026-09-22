@@ -5,10 +5,9 @@
     "cluster": ["yes", "no"],
     "docker": ["yes", "no"],
     "data_dir": ["none", "local", "github", "box"],
-    "examples": ["no", "generic", "data-science"],
+    "examples": ["no", "generic", "data-science", "dashboard", "data-science-and-dashboard"],
     "bsd": ["yes", "no"],
     "ann": ["yes", "no"],
-    "dashboard": ["no", "yes"],
     "__prompts__": {
         "project_name": "What is the name of this project? (This will be used as the project name in the README, etc)",
         "project_slug": "Name the project root directory. (This will be used as the project folder)",
@@ -26,11 +25,12 @@
             "__prompt__": "Would you like to populate the repository with example or scaffold code?",
             "no": "No example code",
             "generic": "Generic examples (pipeline, preprocessing)",
-            "data-science": "Data science scaffold (inference strategies, evaluation framework, CLI)"
+            "data-science": "Data science scaffold (inference strategies, evaluation framework, CLI)",
+            "dashboard": "Vite/React dashboard scaffold (static parquet + DuckDB-wasm, no backend; supported with docker=yes — without Docker you must install Node 22+ yourself)",
+            "data-science-and-dashboard": "Data science scaffold plus the dashboard, with a unified tutorial"
         },
         "bsd": "Would you like to use DSI's default license (BSD-3)?",
-        "ann": "Would you like to require type annotations in ruff?",
-        "dashboard": "Would you like to include an optional Vite/React dashboard scaffold? (Static parquet + DuckDB-wasm, no backend; supported with docker=yes — without Docker you must install Node 22+ yourself)"
+        "ann": "Would you like to require type annotations in ruff?"
     },
-    "_copy_without_render": ["_examples/dashboard"]
+    "_copy_without_render": ["_examples/dashboard/dashboard"]
 }

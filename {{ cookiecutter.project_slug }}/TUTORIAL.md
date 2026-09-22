@@ -1,4 +1,4 @@
-{% if cookiecutter.examples == 'data-science' and cookiecutter.dashboard == 'yes' %}
+{% if cookiecutter.examples == 'data-science-and-dashboard' %}
 # Tutorial
 
 This tutorial has two parts.  **Part 1** builds and runs a strategy in the
@@ -8,7 +8,7 @@ order — Part 2 uses the output of Part 1.
 ---
 
 {% endif %}
-{% if cookiecutter.examples == 'data-science' %}
+{% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}
 # Tutorial: Building and Running Your First Strategy
 
 This walkthrough takes you from zero to a working end-to-end run.
@@ -472,8 +472,8 @@ To see all options for any command, add `--help`:
   answers should look like, or how to interpret the evaluation results.
 
 {% endif %}
-{% if cookiecutter.dashboard == 'yes' %}
-{% if cookiecutter.examples == 'data-science' %}
+{% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}
+{% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}
 
 ---
 
@@ -572,7 +572,7 @@ named after the file stem.  A query like `SELECT * FROM reqs_311 LIMIT 5` or
 `SELECT * FROM my_dataset WHERE category = 'A'` just works.
 
 {% endraw %}
-{% if cookiecutter.examples == 'data-science' %}
+{% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}
 ---
 
 ## Step 2b: Send Your Pipeline Output to the Dashboard

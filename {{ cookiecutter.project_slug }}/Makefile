@@ -34,7 +34,7 @@ run-notebooks: build-only
 	--no-browser --allow-root
 
 {% endif %}
-{% if cookiecutter.dashboard == 'yes' %}
+{% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}
 # Dashboard targets
 .PHONY: dashboard-data dashboard-install dashboard-dev dashboard-build
 
