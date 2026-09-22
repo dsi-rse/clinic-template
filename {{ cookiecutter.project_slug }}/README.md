@@ -199,15 +199,6 @@ def make_plots(self, evaluation_results: dict) -> dict[str, plt.Figure]:
 
 See `classifier_evaluator.py` for a complete example.
 
-{% endif %}
-## Style
-We use [`ruff`](https://docs.astral.sh/ruff/) to enforce style standards and grade code quality. This is an automated code checker that looks for specific issues in the code that need to be fixed to make it readable and consistent with common standards. `ruff` is run before each commit via [`pre-commit`](https://pre-commit.com/). If it fails, the commit will be blocked and the user will be shown what needs to be changed.
-
-To check for errors locally, first ensure that `pre-commit` is installed by running `pip install pre-commit` followed by `pre-commit install`. Once installed, check for errors by running:
-```
-pre-commit run --all-files
-```
-
 ## Repository Structure
 
 ### {{ cookiecutter.code_directory }}
