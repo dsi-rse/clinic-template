@@ -22,19 +22,6 @@ We use `docker` and `make` to run our code. There are three built-in `make` comm
 
 The file `Makefile` contains information about about the specific commands that are run using when calling each `make` statement.
 
-### Developing inside a container with VS Code
-
-If you prefer to develop inside a container with VS Code then do the following steps. Note that this works with both regular scripts as well as jupyter notebooks.
-
-1. Open the repository in VS Code
-2. At the bottom right a window may appear that says `Folder contains a Dev Container configuration file...`. If it does, select, `Reopen in Container` and you are done. Otherwise proceed to next step. 
-3. Click the blue or green rectangle in the bottom left of VS code (should say something like `><` or `>< WSL`). Options should appear in the top center of your screen. Select `Reopen in Container`.
-{% endif %}
-
-{% if cookiecutter.cluster == 'yes' %} ### Slurm
-If you are using the DSI's cluster then you have another option with your `make` commands which is to run VS Code on the cluster login node. To do this execute in `make run-ssh`. 
-
-For more information about how to use Slurm, please look at the information [here](https://github.com/uchicago-dsi/core-facility-docs/blob/main/slurm.md).
 {% endif %}
 
 {% if cookiecutter.examples == 'data-science' %}
