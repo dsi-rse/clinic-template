@@ -185,6 +185,7 @@ def make_plots(self, evaluation_results: dict) -> dict[str, plt.Figure]:
 ```
 
 See `classifier_evaluator.py` for a complete example.
+{% endif %}
 
 ## Repository Structure
 

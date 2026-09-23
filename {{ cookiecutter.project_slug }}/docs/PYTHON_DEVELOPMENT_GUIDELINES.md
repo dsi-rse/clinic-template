@@ -1,10 +1,11 @@
 # Python Development Guidelines
 
 ## Environment management
-TODO: Fork this to be different if use_cluster.
-- Manage the Python environment with uv.
+{% if cookiecutter.cluster == 'yes' %}- This project is designed to run on the DSI cluster.
+- Use micromamba to build and manage conda environments.
+{% else %}- Manage the Python environment with uv.
 - Manage additional dependencies with Docker.
-
+{% endif %}
 ## Repo structure
 - Core Python code lives in src/{package-name}/.
 
