@@ -5,7 +5,7 @@
     "cluster": ["yes", "no"],
     "docker": ["yes", "no"],
     "data_dir": ["none", "local", "github", "box"],
-    "examples": ["no", "generic", "data-science"],
+    "examples": ["no", "generic", "data-science", "dashboard", "data-science-and-dashboard"],
     "bsd": ["yes", "no"],
     "ann": ["yes", "no"],
     "__prompts__": {
@@ -25,9 +25,12 @@
             "__prompt__": "Would you like to populate the repository with example or scaffold code?",
             "no": "No example code",
             "generic": "Generic examples (pipeline, preprocessing)",
-            "data-science": "Data science scaffold (inference strategies, evaluation framework, CLI). Requires a data_dir other than none."
+            "data-science": "Data science scaffold (inference strategies, evaluation framework, CLI). Requires a data_dir other than none.",
+            "dashboard": "Vite/React dashboard scaffold (static parquet + DuckDB-wasm, no backend; supported with docker=yes — without Docker you must install Node 22+ yourself)",
+            "data-science-and-dashboard": "Data science scaffold plus the dashboard, with a unified tutorial. Requires a data_dir other than none."
         },
         "bsd": "Would you like to use DSI's default license (BSD-3)?",
         "ann": "Would you like to require type annotations in ruff?"
-    }
+    },
+    "_copy_without_render": ["_examples/dashboard/dashboard"]
 }

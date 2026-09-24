@@ -10,12 +10,13 @@ dependencies = [
   # project packages
   "numpy~=2.2",
   "pandas~=2.2",
-  {% if cookiecutter.examples == 'data-science' %}"click~=8.1",
+  {% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}"click~=8.1",
   "matplotlib~=3.9",
   "seaborn~=0.13",
   "tqdm~=4.67",{% endif %}
   {% if cookiecutter.data_dir != 'none' %}"python-dotenv~=1.0.0",{% endif %}
   {% if cookiecutter.cluster == 'yes' %}"submitit~=1.4",{% endif %}
+  {% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}"pyarrow~=18.0",{% endif %}
 ]
 
 [dependency-groups]
@@ -28,7 +29,7 @@ dev = [
   "ipykernel~=6.16",
 ]
 
-{% if cookiecutter.examples == 'data-science' %}
+{% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}
 [project.scripts]
 {{ cookiecutter.project_slug }} = "{{ cookiecutter.code_directory }}.cli:cli"
 {% endif %}

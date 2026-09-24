@@ -1,0 +1,7 @@
+node_modules/
+dist/
+public/data/*.parquet
+public/data/*.parquet.tmp
+.env
+playwright-report/
+test-results/

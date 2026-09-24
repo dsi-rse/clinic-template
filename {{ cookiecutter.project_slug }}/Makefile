@@ -18,22 +18,56 @@ ifeq ($(DATA_DIR),)
 endif
 {% endif %}
 
-{% if cookiecutter.docker == "yes" %}# Build Docker image 
+{% if cookiecutter.docker == "yes" %}# Build Docker image
 .PHONY: build-only run-interactive run-notebook
 
-# Build Docker image 
-build-only: 
+# Build Docker image
+build-only:
 	docker compose build
 
-run-interactive: build-only	
+run-interactive: build-only
 	docker compose run -it --rm $(project_name) /bin/bash
 
-run-notebooks: build-only	
+run-notebooks: build-only
 	docker compose run --rm -p 8888:8888 -t $(project_name) \
 	jupyter lab --port=8888 --ip='*' --NotebookApp.token='' --NotebookApp.password='' \
 	--no-browser --allow-root
 
-{% endif %}{% if cookiecutter.cluster == "yes" %}
+{% endif %}
+{% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}
+# Dashboard targets
+.PHONY: dashboard-data dashboard-install dashboard-dev dashboard-build
+
+{% if cookiecutter.docker == "yes" %}
+dashboard-data:
+	docker compose run --rm dashboard-data
+
+dashboard-install:
+	docker compose run --rm dashboard npm install
+
+dashboard-dev: dashboard-install
+	docker compose run --rm -p 5173:5173 dashboard npm run dev -- --host
+
+dashboard-build: dashboard-install
+	docker compose run --rm dashboard npm run build
+
+{% else %}
+# pull_data.py is stdlib-only, so it runs with any host python3
+dashboard-data:
+	python3 dashboard/scripts/pull_data.py
+
+dashboard-install:
+	cd dashboard && npm install
+
+dashboard-dev: dashboard-install
+	cd dashboard && npm run dev -- --host
+
+dashboard-build: dashboard-install
+	cd dashboard && npm run build
+
+{% endif %}
+{% endif %}
+{% if cookiecutter.cluster == "yes" %}
 open-ssh-login-node:
 	code --remote ssh-remote+fe.ds ~/{{ cookiecutter.project_slug }}
 {% endif %}
