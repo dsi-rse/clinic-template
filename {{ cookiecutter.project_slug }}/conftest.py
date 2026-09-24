@@ -1,4 +1,4 @@
-"""Configure pytest."""
+"""Configure pytest. This file exists so that linting can pass even when there are no tests."""
 
 
 def pytest_sessionfinish(session, exitstatus) -> None:  # noqa: ANN001

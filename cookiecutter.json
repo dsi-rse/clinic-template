@@ -25,7 +25,7 @@
             "__prompt__": "Would you like to populate the repository with example or scaffold code?",
             "no": "No example code",
             "generic": "Generic examples (pipeline, preprocessing)",
-            "data-science": "Data science scaffold (inference strategies, evaluation framework, CLI)"
+            "data-science": "Data science scaffold (inference strategies, evaluation framework, CLI). Requires a data_dir other than none."
         },
         "bsd": "Would you like to use DSI's default license (BSD-3)?",
         "ann": "Would you like to require type annotations in ruff?"
