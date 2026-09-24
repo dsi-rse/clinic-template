@@ -28,5 +28,7 @@
 ## Code quality & conventions
 - Code should follow the standards described here: https://clinic.ds.uchicago.edu/coding-standards/coding-standards.html.
 - All code must pass the [`ruff`](https://docs.astral.sh/ruff/) rules as defined in pyproject.toml.
-  -`ruff` should be run before each commit via [`pre-commit`](https://pre-commit.com/). If it fails, the commit will be blocked and the user will be shown what needs to be changed.
-  - To check for errors locally, first ensure that `pre-commit` is installed by running `pip install pre-commit` followed by `pre-commit install`. Once installed, check for errors by running: `pre-commit run --all-files`.
+  - `ruff` should be run before each commit via [`pre-commit`](https://pre-commit.com/). If it fails, the commit will be blocked and the user will be shown what needs to be changed.
+{% if cookiecutter.cluster == 'yes' %}  - To check for errors locally, first ensure that `pre-commit` is installed by running `pip install pre-commit` followed by `pre-commit install`. Once installed, check for errors by running: `pre-commit run --all-files`.
+{% else %}  - To check for errors locally, run `uv run pre-commit install` once. Then check for errors by running: `uv run pre-commit run --all-files`.
+{% endif %}
