@@ -17,7 +17,10 @@ print_test_header "$TEST_NAME"
 cleanup_project "$PROJECT_DIR"
 mkdir -p "$TEST_DIR"
 
-# Run test
+# Run test.
+# NOTE: bash ignores errexit inside a subshell that is part of an || list, so the
+# subshell is run on its own and its exit status is checked explicitly.
+set +e
 (
     set -e
     create_project "$PROJECT_NAME" \
@@ -34,11 +37,14 @@ mkdir -p "$TEST_DIR"
     test_source_import "$PROJECT_DIR" "$PROJECT_SLUG" "utils"
     
     print_test_success "$TEST_NAME"
-) || {
+)
+status=$?
+set -e
+if [ "$status" -ne 0 ]; then
     print_test_failure "$TEST_NAME"
     cleanup_project "$PROJECT_DIR"
     exit 1
-}
+fi
 
 # Cleanup after success
 cleanup_project "$PROJECT_DIR"
