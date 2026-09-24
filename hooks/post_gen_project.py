@@ -6,7 +6,7 @@ from datetime import datetime
 use_cluster = "{{ cookiecutter.cluster }}" == "yes"
 use_docker = "{{ cookiecutter.docker }}" == "yes"
 use_data_dir = "{{ cookiecutter.data_dir }}" != "none"
-use_local_data_dir = "{{ cookiecutter.data_dir }}" in ["local", "github"]
+use_github_data_dir = "{{ cookiecutter.data_dir }}" == "github"
 examples = "{{ cookiecutter.examples }}"
 keep_bsd3 = f"{{ cookiecutter.bsd }}" == "yes"
 use_annotations = f"{{ cookiecutter.ann }}" == "yes"
@@ -23,7 +23,7 @@ if not use_docker:
 if not use_data_dir:
     os.remove("src/{{ cookiecutter.code_directory }}/settings.py")
 
-if not use_local_data_dir:
+if not use_github_data_dir:
     os.remove("data/README.md")
     os.rmdir("data")
 

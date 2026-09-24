@@ -17,17 +17,15 @@ print_test_header "$TEST_NAME"
 cleanup_project "$PROJECT_DIR"
 mkdir -p "$TEST_DIR"
 
-# The data-science scaffold imports settings.DATA_DIR, which only exists when
-# data_dir != none, so generate it the way the docs assume: with Box.
-# Run test
-# NOTE: the subshell must NOT be part of a `|| { ... }` list — that would
-# disable `set -e` inside it and swallow failures. Capture $? instead.
+# Run test.
+# NOTE: bash ignores errexit inside a subshell that is part of an || list, so the
+# subshell is run on its own and its exit status is checked explicitly.
 set +e
 (
     set -e
     create_project "$PROJECT_NAME" \
         docker="yes" \
-        data_dir="box" \
+        data_dir="local" \
         cluster="no" \
         examples="data-science" \
         bsd="yes" \
@@ -38,10 +36,9 @@ set +e
 
     print_test_success "$TEST_NAME"
 )
-STATUS=$?
+status=$?
 set -e
-
-if [ $STATUS -ne 0 ]; then
+if [ "$status" -ne 0 ]; then
     print_test_failure "$TEST_NAME"
     cleanup_project "$PROJECT_DIR"
     exit 1

@@ -20,8 +20,8 @@ print_test_header "$TEST_NAME"
 cleanup_project "$PROJECT_DIR" || true
 mkdir -p "$TEST_DIR"
 
-# NOTE: the subshell must NOT be part of a `|| { ... }` list — that would
-# disable `set -e` inside it and swallow failures. Capture $? instead.
+# NOTE: bash ignores errexit inside a subshell that is part of an || list, so the
+# subshell is run on its own and its exit status is checked explicitly.
 set +e
 (
     set -e
@@ -35,10 +35,9 @@ set +e
 
     test_dashboard "$PROJECT_DIR" "$PROJECT_NAME" "$PROJECT_SLUG" "utils"
 )
-STATUS=$?
+status=$?
 set -e
-
-if [ $STATUS -ne 0 ]; then
+if [ "$status" -ne 0 ]; then
     print_test_failure "$TEST_NAME"
     cleanup_project "$PROJECT_DIR" || true
     exit 1
@@ -117,10 +116,9 @@ set +e
     (cd "$PROJECT_DIR" && make -n build-only > /dev/null)
     echo "   ✓ docker compose config and make -n succeed"
 )
-STATUS=$?
+status=$?
 set -e
-
-if [ $STATUS -ne 0 ]; then
+if [ "$status" -ne 0 ]; then
     print_test_failure "$TEST_NAME"
     cleanup_project "$PROJECT_DIR" || true
     exit 1
@@ -185,10 +183,9 @@ set +e
     done
     echo "   ✓ Dashboard and data-science scaffolds both present"
 )
-STATUS=$?
+status=$?
 set -e
-
-if [ $STATUS -ne 0 ]; then
+if [ "$status" -ne 0 ]; then
     print_test_failure "$TEST_NAME"
     cleanup_project "$PROJECT_DIR" || true
     exit 1

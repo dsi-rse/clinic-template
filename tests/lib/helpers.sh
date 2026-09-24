@@ -44,6 +44,10 @@ build_docker() {
     local project_dir="$1"
     echo "   Building Docker image..."
     cd "$project_dir"
+    if ! docker info >/dev/null 2>&1; then
+        echo "   ✗ Docker daemon is not running"
+        return 1
+    fi
     docker compose build --quiet
     echo "   ✓ Docker image built"
 }
@@ -57,7 +61,8 @@ test_python_version() {
     local service_name="$2"
     echo "   Testing Python installation..."
     cd "$project_dir"
-    local version=$(docker compose run --rm "$service_name" python --version 2>&1 | grep -o 'Python.*')
+    local version
+    version=$(docker compose run --rm "$service_name" python --version 2>/dev/null)
     echo "   ✓ $version"
 }
 
