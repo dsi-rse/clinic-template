@@ -8,3 +8,4 @@ public/data/*
 .env
 playwright-report/
 test-results/
+.wrangler/

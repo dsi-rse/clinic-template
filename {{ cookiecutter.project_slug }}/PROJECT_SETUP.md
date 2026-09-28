@@ -105,37 +105,73 @@ If that works, go through the tutorial yourself to see if you run into any issue
 
 Complete these steps once per project before the first deploy.  Students do not need to do this.  File paths in this section are relative to `dashboard/`.
 
-### 1. Create the Cloudflare Pages project
+Don't use the Cloudflare dashboard's "Create" wizard.  It defaults to a Workers project, which the CI workflow can't deploy to.  Create the project from your machine instead (step 2).
 
-1. Log in to [Cloudflare](https://dash.cloudflare.com) and go to **Workers & Pages → Create → Pages**.
-2. Choose **Direct Upload** (the CI workflow uses Wrangler, not the Git integration).
-3. Name the project exactly **`{{ cookiecutter.project_slug }}-dashboard`**.
-4. Complete the creation wizard — an initial deploy is not required.
-5. **Set the project's production branch to `main`** (Settings → Builds & deployments).  CI deploys with `--branch=main`; if the production branch is anything else, every deploy silently lands on a preview URL and the public `pages.dev` URL never updates.  (If you create the project with the CLI instead, pass `--production-branch=main` — wrangler's default is `production`, not `main`.)
+### 1. Create a Cloudflare API token
 
-### 2. Generate a Cloudflare API token
+1. In [Cloudflare](https://dash.cloudflare.com), go to **Manage Account → Account API Tokens → Create token**.
+2. Add one policy: scope it to the **whole account** (UChicago DSI Account), with the permission **Cloudflare Pages → Edit** (shown as "Pages Write").  Don't scope it to a single project or Worker; wrangler rejects project-scoped tokens with code 10000.
+3. Set the expiry to after the quarter ends.
+4. Copy the token.  Cloudflare only shows it once.
+5. Copy your account ID from the dashboard URL (`dash.cloudflare.com/<account-id>/...`).
 
-1. In Cloudflare, go to **My Profile → API Tokens → Create Token**.
-2. Choose **Create Custom Token** with a single permission: **Account → Cloudflare Pages → Edit**.  (Do not use the broader Workers template — this token lives in GitHub secrets, so give it the minimum scope that can deploy Pages.)
-3. Scope the token to your account.
-4. Copy the token — you will only see it once.
+### 2. Create and test the project from your machine
 
-### 3. Add GitHub repository secrets
+{% if cookiecutter.docker == "yes" %}Run these from the project root.  wrangler runs inside the `dashboard` container, so you don't need Node installed.
 
-In the GitHub repository go to **Settings → Secrets and variables → Actions** and add:
+```bash
+make dashboard-install   # installs the same wrangler version CI uses
+export CLOUDFLARE_API_TOKEN=<token from step 1>
+export CLOUDFLARE_ACCOUNT_ID=<account ID from step 1>
+docker compose run --rm -e CLOUDFLARE_API_TOKEN -e CLOUDFLARE_ACCOUNT_ID dashboard \
+  npx wrangler pages project create {{ cookiecutter.project_slug }}-dashboard --production-branch=main
+docker compose run --rm -e CLOUDFLARE_API_TOKEN -e CLOUDFLARE_ACCOUNT_ID dashboard sh -c \
+  'mkdir -p /tmp/cf-test && echo ok > /tmp/cf-test/index.html && npx wrangler pages deploy /tmp/cf-test --project-name={{ cookiecutter.project_slug }}-dashboard --branch=local-test'
+```
+
+`-e NAME` with no value passes your shell's value into the container.
+{% else %}This needs Node 22.  From `dashboard/`:
+
+```bash
+npm ci   # installs the same wrangler version CI uses
+export CLOUDFLARE_API_TOKEN=<token from step 1>
+export CLOUDFLARE_ACCOUNT_ID=<account ID from step 1>
+npx wrangler pages project create {{ cookiecutter.project_slug }}-dashboard --production-branch=main
+mkdir -p /tmp/cf-test && echo ok > /tmp/cf-test/index.html
+npx wrangler pages deploy /tmp/cf-test --project-name={{ cookiecutter.project_slug }}-dashboard --branch=local-test
+```
+{% endif %}
+- `--production-branch=main` is required.  CI deploys with `--branch=main`, and wrangler's default production branch is `production`, so without the flag every deploy lands on a preview URL and the public URL never updates.
+- The test deploy goes to a preview URL (`local-test.{{ cookiecutter.project_slug }}-dashboard.pages.dev`).  If it succeeds, the token works.
+
+### 3. Add GitHub secrets and run CI
+
+In the GitHub repository go to **Settings → Secrets and variables → Actions** and add the same values you just tested:
 
 | Secret name | Value |
 |---|---|
-| `CLOUDFLARE_API_TOKEN` | The token from step 2 |
-| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID (visible in the Cloudflare dashboard URL or the Overview page) |
+| `CLOUDFLARE_API_TOKEN` | The token from step 1 |
+| `CLOUDFLARE_ACCOUNT_ID` | The account ID from step 1 |
 
-After these secrets are set, every push to `main` triggers a deploy.  The live URL will be:
+You can set these as organization secrets instead.  A repository secret overrides an organization secret with the same name.
+
+Then go to **Actions → Dashboard CI/CD → Run workflow**, run it from `main`, and confirm the run goes green and this URL serves the dashboard:
 
 ```
 https://{{ cookiecutter.project_slug }}-dashboard.pages.dev
 ```
 
-**Verify the setup now** rather than waiting for a student's push to fail: in GitHub go to **Actions → Dashboard CI/CD → Run workflow** (run it from `main`), and confirm the run goes green and the URL above serves the dashboard.
+From now on every push to `main` that touches `dashboard/` deploys.
+
+#### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Code 10000 locally | Token is scoped to one project/Worker, or lacks Pages Edit | Recreate it scoped to the whole account with Cloudflare Pages → Edit |
+| Code 10000 in CI only | The GitHub secret holds a different token | Paste the token you tested in step 2 again |
+| Deploys only reach preview URLs | Production branch isn't `main` | In the Pages project, **Settings → Builds & deployments → Production branch** → `main` |
+| "Project not found" | Name mismatch, or project is in a different account | Check `--project-name` in `.github/workflows/dashboard.workflow.yml` and `CLOUDFLARE_ACCOUNT_ID` |
+| You created a Workers project by mistake | Dashboard wizard default | Delete it and run step 2 |
 
 ### 4. Add datasets via Box
 
