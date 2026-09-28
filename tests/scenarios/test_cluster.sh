@@ -1,5 +1,5 @@
 #!/bin/bash
-# Test: Cluster configuration (cluster=yes)
+# Test: Cluster configuration (cluster=yes) with the data-science scaffold
 
 set -e
 
@@ -25,9 +25,9 @@ set +e
     set -e
     create_project "$PROJECT_NAME" \
         docker="yes" \
-        data_dir="none" \
+        data_dir="local" \
         cluster="yes" \
-        examples="no" \
+        examples="data-science" \
         bsd="yes" \
         ann="no"
     
@@ -36,6 +36,8 @@ set +e
     test_package_imports "$PROJECT_DIR" "$PROJECT_SLUG"
     test_source_import "$PROJECT_DIR" "$PROJECT_SLUG" "utils"
     test_cluster_config "$PROJECT_DIR" "$PROJECT_SLUG"
+    test_examples_data_science "$PROJECT_DIR" "$PROJECT_SLUG" "utils"
+    test_ds_scripts_help "$PROJECT_DIR" "$PROJECT_SLUG"
     
     print_test_success "$TEST_NAME"
 )

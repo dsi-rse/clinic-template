@@ -36,4 +36,13 @@ run-notebooks: build-only
 {% endif %}{% if cookiecutter.cluster == "yes" %}
 open-ssh-login-node:
 	code --remote ssh-remote+fe.ds ~/{{ cookiecutter.project_slug }}
-{% endif %}
+{% endif %}{% if cookiecutter.examples == 'data-science' %}
+# Run one strategy over every input and evaluate it.
+# Override the defaults with: make run STRATEGY=MyStrategy ARGS="--param threshold=0.7"
+STRATEGY ?= ExampleStrategy
+.PHONY: run
+{% if cookiecutter.docker == "yes" %}run: build-only
+	docker compose run --rm $(project_name) python scripts/predict_and_evaluate.py --strategy $(STRATEGY) $(ARGS)
+{% else %}run:
+	{% if cookiecutter.cluster == 'yes' %}python{% else %}uv run python{% endif %} scripts/predict_and_evaluate.py --strategy $(STRATEGY) $(ARGS)
+{% endif %}{% endif %}

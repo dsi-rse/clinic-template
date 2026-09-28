@@ -1,22 +1,32 @@
-"""Example evaluator that checks for exact match between predicted and actual values."""
-from typing import Any
+"""The simplest possible evaluator: exact match on every expected field."""
 
-from {{ cookiecutter.code_directory }}.evaluation import AbstractEvaluator
+from collections.abc import Mapping
+
+from {{ cookiecutter.code_directory }}.framework.base import Evaluator
+from {{ cookiecutter.code_directory }}.types import ExpectedOutput, Prediction
 
 
-class ExampleEvaluator(AbstractEvaluator):
-    """A simple evaluator that checks whether predicted and actual values match exactly."""
+class ExampleEvaluator(Evaluator):
+    """Count a prediction as correct if it matches every field of the expected output.
 
-    def evaluate_single_output(self, predicted: Any, actual: Any) -> dict[str, Any]:
-        """Compare predicted and actual values for equality.
+    Extra keys on the prediction (for example ``confidence``) are ignored.
+    The summary reports plain accuracy.
 
-        Args:
-            predicted: The predicted value.
-            actual: The actual (ground-truth) value.
+    TODO: replace or extend this with scoring that fits your project.
+    """
 
-        Returns:
-            A dict with whether the predicted and actual values match.
-        """
-        return {
-            "is_correct": predicted == actual,
-        }
+    def evaluate_single_output(
+        self, predicted: Prediction, expected: ExpectedOutput
+    ) -> dict[str, object]:
+        """Whether every expected field matches the prediction."""
+        return {"is_correct": all(predicted.get(k) == v for k, v in expected.items())}
+
+    def aggregate(
+        self,
+        predicted: Mapping[str, Prediction],
+        expected: Mapping[str, ExpectedOutput],
+        per_item: Mapping[str, dict],
+    ) -> dict[str, object]:
+        """Fraction of evaluated items that were correct."""
+        correct = sum(1 for r in per_item.values() if r["is_correct"])
+        return {"accuracy": correct / len(per_item) if per_item else float("nan")}

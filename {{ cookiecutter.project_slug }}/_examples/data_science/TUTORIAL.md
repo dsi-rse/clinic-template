@@ -43,11 +43,11 @@ a bash shell inside the container. Leave this terminal open — you'll come back
 Inside the container, run:
 
 ```bash
-{{ cookiecutter.project_slug }} --help
+python scripts/predict_and_evaluate.py --help
 ```
 
-You should see a list of available commands. If you get a "command not found"
-error, ask your mentor for help.
+You should see the script's options, including the strategies and evaluators
+it found. If you get an import error instead, ask your mentor for help.
 
 > **Troubleshooting.** If `make run-interactive` fails, check that Docker
 > Desktop is running and that your terminal is a Unix shell (Terminal on Mac,
@@ -70,7 +70,7 @@ same container you just started.
    in the name)
 
 VS Code will open a new window connected to the container. Use
-**File → Open Folder** and open `/program` — that's where the project lives
+**File → Open Folder** and open `/project` — that's where the project lives
 inside the container.
 
 > **Tip:** You only need to do this once per session. As long as the container
@@ -108,10 +108,9 @@ shape you need to handle. Create a notebook in `notebooks/` and inspect a
 single example.
 
 ```python
-from {{ cookiecutter.code_directory }}.settings import DATA_DIR
-from {{ cookiecutter.code_directory }}.io import load_inputs
+from {{ cookiecutter.code_directory }}.data import load_inputs
 
-inputs = load_inputs(DATA_DIR / "input")
+inputs = load_inputs()
 key, single_input = next(iter(inputs.items()))
 
 print(key)
@@ -147,28 +146,28 @@ Paste in this starter template:
 ```python
 """Strategy that does XYZ."""
 
-from typing import Any
-
-from {{ cookiecutter.code_directory }}.inference import InferenceStrategy
+from {{ cookiecutter.code_directory }}.framework.base import InferenceStrategy
+from {{ cookiecutter.code_directory }}.types import Input, Prediction
 
 
 class MyStrategy(InferenceStrategy):
     """A short description of what this strategy does."""
 
-    def do_inference(self, inference_input: Any) -> dict[str, Any]:
+    def do_inference(self, inference_input: Input) -> Prediction:
         """Process a single input and return results.
 
         Args:
             inference_input: One item from the dataset.
 
         Returns:
-            A dict containing the results.
+            A dict with the keys defined by Prediction in types.py.
         """
-        return {"result": "placeholder"}
+        return {"label": True}
 ```
 
 That's a complete, working strategy. The only method you *must* implement is
-`do_inference`. It receives one input and returns a dict with your results.
+`do_inference`. It receives one input and returns a dict with your results,
+using the keys defined by `Prediction` in `src/{{ cookiecutter.code_directory }}/types.py`.
 
 ### Adding configurable parameters
 
@@ -179,10 +178,11 @@ model name, a window size, etc.), accept them in `__init__`:
 class MyStrategy(InferenceStrategy):
     """Strategy with a configurable threshold."""
 
-    def __init__(self, threshold=0.5):
+    def __init__(self, threshold: float = 0.5) -> None:
+        """Remember the threshold."""
         self.threshold = threshold
 
-    def do_inference(self, inference_input: Any) -> dict[str, Any]:
+    def do_inference(self, inference_input: Input) -> Prediction:
         """Process a single input and return results.
 
         Args:
@@ -249,9 +249,8 @@ In your first code cell, enable automatic reloading and put your imports:
 %load_ext autoreload
 %autoreload 2
 
+from {{ cookiecutter.code_directory }}.data import load_inputs
 from {{ cookiecutter.code_directory }}.inference_strategies.my_strategy import MyStrategy
-from {{ cookiecutter.code_directory }}.io import load_inputs
-from {{ cookiecutter.code_directory }}.settings import DATA_DIR
 ```
 
 `%autoreload 2` tells the notebook to re-read your `.py` files every time you
@@ -261,7 +260,7 @@ notebook, you can just re-run the cell — no need to restart the kernel.
 In the next cell, load one input and test your strategy:
 
 ```python
-inputs = load_inputs(DATA_DIR / "input")
+inputs = load_inputs()
 key, single_input = next(iter(inputs.items()))
 
 strategy = MyStrategy()          # pass parameters here if your strategy takes any
@@ -294,12 +293,11 @@ Now you'll run your strategy across *every* input and evaluate the results.
 In the same notebook (or a new one in the attached VS Code), run:
 
 ```python
-from {{ cookiecutter.code_directory }}.pipeline import run_pipeline
+from {{ cookiecutter.code_directory }}.framework.pipeline import run_pipeline
 
 run_dir = run_pipeline(
     "MyStrategy",                    # the class name of your strategy
     "ExampleEvaluator",              # the evaluator to use (ask your mentor which one)
-    expected_path="data/expected",   # path to the correct answers
 )
 print("Results saved to:", run_dir)
 ```
@@ -310,7 +308,6 @@ If your strategy takes parameters:
 run_dir = run_pipeline(
     "MyStrategy",
     "ExampleEvaluator",
-    expected_path="data/expected",
     params={"threshold": 0.8},
 )
 ```
@@ -320,9 +317,12 @@ run_dir = run_pipeline(
 `run_pipeline` does two things in sequence:
 
 1. **Inference** — loads every input, runs `do_inference` on each one, and
-   saves all the outputs to a timestamped folder inside `data/output/`.
-2. **Evaluation** — compares your outputs to the correct answers and saves
-   scores (and any plots) into the same folder.
+   saves all the outputs to a timestamped folder inside `DATA_DIR/output/`,
+   along with the expected outputs for those inputs.
+2. **Evaluation** — compares your outputs to the expected outputs and saves
+   scores (and any plots) into the same folder as `evaluation.json`, which has
+   two parts: `"per_item"` (one entry per input) and `"summary"` (dataset-level
+   numbers).
 
 ### Inspecting the results
 
@@ -335,8 +335,10 @@ import json
 with open(run_dir / "evaluation.json") as f:
     results = json.load(f)
 
-# Pretty-print the first few results
-for key, value in list(results.items())[:5]:
+print(results["summary"])
+
+# The first few per-item results
+for key, value in list(results["per_item"].items())[:5]:
     print(key, value)
 ```
 
@@ -345,14 +347,12 @@ If you want a more tabular view, convert the results to a DataFrame:
 ```python
 import pandas as pd
 
-results_df = pd.read_json(run_dir / "evaluation.json").T
+results_df = pd.DataFrame.from_dict(results["per_item"], orient="index")
 results_df.head()
 ```
 
-`pd.DataFrame.from_dict(results, orient="index")` works too if you already
-have the JSON loaded into memory.
-
-If the evaluator produces plots (like a confusion matrix), they are saved as
+If the evaluator produces plots (`ClassifierEvaluator` draws a confusion
+matrix, for example), they are saved as
 `.png` files in the same folder. You can display them in the notebook:
 
 ```python
@@ -368,12 +368,12 @@ the same outputs, or re-evaluate without re-running inference. You can split
 the two steps:
 
 ```python
-from {{ cookiecutter.code_directory }}.pipeline import run_inference, run_evaluation
+from {{ cookiecutter.code_directory }}.framework.pipeline import run_inference, run_evaluation
 
 # Run inference only
 run_dir = run_inference("MyStrategy", params={"threshold": 0.8})
 
-run_evaluation("ExampleEvaluator", run_dir=run_dir, expected_path="data/expected")
+run_evaluation(run_dir, "ExampleEvaluator")
 ```
 
 ---
@@ -389,39 +389,40 @@ still have a bash prompt inside the container.
 Run inference and evaluation together:
 
 ```bash
-{{ cookiecutter.project_slug }} run \
+python scripts/predict_and_evaluate.py \
     --strategy MyStrategy \
-    --evaluator ExampleEvaluator \
-    --expected data/expected
+    --evaluator ExampleEvaluator
 ```
 
 With parameters:
 
 ```bash
-{{ cookiecutter.project_slug }} run \
+python scripts/predict_and_evaluate.py \
     --strategy MyStrategy \
     --evaluator ExampleEvaluator \
-    --expected data/expected \
     --param threshold=0.8
 ```
 
-You can also run inference and evaluation as separate commands:
+To re-evaluate an existing run with a different evaluator, without re-running
+inference (use the path printed at the end of the previous command):
 
 ```bash
-# Run inference only
-{{ cookiecutter.project_slug }} infer --strategy MyStrategy --param threshold=0.8
-
-# Evaluate an existing run (use the path printed by the infer command)
-{{ cookiecutter.project_slug }} evaluate \
-    --evaluator ExampleEvaluator \
-    --run-dir data/output/MyStrategy/2025-01-15_14-30-00 \
-    --expected data/expected
+python scripts/evaluate.py \
+    "$DATA_DIR/output/MyStrategy/2025-01-15_14-30-00" \
+    --evaluator ClassifierEvaluator
 ```
 
-To see all options for any command, add `--help`:
+To see all options for either script, add `--help`:
 
 ```bash
-{{ cookiecutter.project_slug }} run --help
+python scripts/predict_and_evaluate.py --help
+```
+
+From your own machine, without opening a shell in the container, `make run`
+does the same thing:
+
+```bash
+make run STRATEGY=MyStrategy ARGS="--param threshold=0.8"
 ```
 
 ---

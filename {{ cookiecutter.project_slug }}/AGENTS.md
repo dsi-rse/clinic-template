@@ -7,11 +7,11 @@ Also note:
 - There will be multiple students working in this repo, which may lead to divergence of structure and duplication of functionality. 
 
 For Python development, follow these guidelines and encourage students to follow them:
-- @PYTHON_DEVELOPMENT_GUIDELINES.md
+- @docs/PYTHON_DEVELOPMENT_GUIDELINES.md
 
 Other instructions:
 - Do not change AGENTS.md unless explicitly asked to.
-- Do not change PYTHON_DEVELOPMENT_GUIDELINES.md unless explicitly asked to.
-- Do not change linting rules unless explcitly asked to.
+- Do not change docs/PYTHON_DEVELOPMENT_GUIDELINES.md unless explicitly asked to.
+- Do not change linting rules unless explicitly asked to.
 - Sign your commits as Claude
 - If you post on GitHub (issues, comments, etc), put your comment in a collapsed block like: <details><summary>Claude: {one-line summary of comment}</summary>{your comment}</details>

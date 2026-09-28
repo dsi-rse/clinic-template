@@ -151,21 +151,30 @@ test_examples_data_science() {
     fi
     echo "   ✓ _examples/ staging directory removed"
 
-    # Every file that should have been copied into src/<module>/
+    # Every file the scaffold should have put in place
     local expected_files=(
-        "src/$module_name/cli.py"
-        "src/$module_name/evaluation.py"
-        "src/$module_name/inference.py"
-        "src/$module_name/io.py"
-        "src/$module_name/pipeline.py"
-        "src/$module_name/register.py"
+        "src/$module_name/__init__.py"
+        "src/$module_name/settings.py"
+        "src/$module_name/data.py"
+        "src/$module_name/types.py"
+        "src/$module_name/framework/__init__.py"
+        "src/$module_name/framework/base.py"
+        "src/$module_name/framework/pipeline.py"
+        "src/$module_name/framework/cli_options.py"
         "src/$module_name/evaluators/__init__.py"
-        "src/$module_name/evaluators/classifier_evaluator.py"
         "src/$module_name/evaluators/example_evaluator.py"
+        "src/$module_name/evaluators/classifier_evaluator.py"
         "src/$module_name/inference_strategies/__init__.py"
         "src/$module_name/inference_strategies/example_strategy.py"
+        "scripts/README.md"
+        "scripts/predict_and_evaluate.py"
+        "scripts/evaluate.py"
+        "tests/conftest.py"
+        "tests/test_scripts.py"
+        "TUTORIAL.md"
+        "PROJECT_SETUP.md"
+        "output/README.md"
     )
-
     for f in "${expected_files[@]}"; do
         if [ ! -f "$f" ]; then
             echo "   ✗ Expected file not found: $f"
@@ -174,13 +183,100 @@ test_examples_data_science() {
         echo "   ✓ $f"
     done
 
-    # Confirm the example submodules are importable inside the container
+    # Files from the old click-based scaffold must be gone
+    local removed_files=(
+        "src/$module_name/cli.py"
+        "src/$module_name/inference.py"
+        "src/$module_name/evaluation.py"
+        "src/$module_name/register.py"
+        "src/$module_name/io.py"
+        "src/$module_name/pipeline.py"
+    )
+    for f in "${removed_files[@]}"; do
+        if [ -e "$f" ]; then
+            echo "   ✗ Stale file still present: $f"
+            return 1
+        fi
+    done
+    echo "   ✓ no stale scaffold files"
+
+    # Wiring checks
+    if grep -q '\[project.scripts\]' pyproject.toml || grep -q 'click' pyproject.toml; then
+        echo "   ✗ pyproject.toml still has the click console script"
+        return 1
+    fi
+    if ! grep -q 'predict_and_evaluate.py' scripts/README.md; then
+        echo "   ✗ scripts/README.md was not overlaid by the data-science version"
+        return 1
+    fi
+    echo "   ✓ pyproject and scripts/README.md wired correctly"
+
+    # Confirm every module imports inside the container and discovery finds the examples
     docker compose run --rm "$service_name" python -c "
-from $module_name import cli, evaluation, inference, io, pipeline, register
+import sys
+from $module_name import data, settings, types
+from $module_name.framework import base, cli_options, pipeline
 from $module_name.evaluators import classifier_evaluator, example_evaluator
 from $module_name.inference_strategies import example_strategy
-print('   ✓ all data-science example modules imported successfully')
+sys.path.insert(0, 'scripts')
+import evaluate, predict_and_evaluate
+assert 'ExampleStrategy' in base.discover_inference_strategies()
+assert {'ClassifierEvaluator', 'ExampleEvaluator'} <= set(base.discover_evaluators())
+print('   ✓ all data-science example modules imported and discovered')
 "
+}
+
+test_ds_scripts_help() {
+    local project_dir="$1"
+    local service_name="$2"
+    echo "   Testing script --help output..."
+    cd "$project_dir"
+    local out
+    out=$(docker compose run --rm "$service_name" python scripts/predict_and_evaluate.py --help)
+    for name in ExampleStrategy ClassifierEvaluator ExampleEvaluator; do
+        if ! echo "$out" | grep -q "$name"; then
+            echo "   ✗ predict_and_evaluate.py --help does not mention $name"
+            return 1
+        fi
+    done
+    out=$(docker compose run --rm "$service_name" python scripts/evaluate.py --help)
+    if ! echo "$out" | grep -q "run_dir"; then
+        echo "   ✗ evaluate.py --help does not mention run_dir"
+        return 1
+    fi
+    echo "   ✓ both scripts print help listing the discovered plug-ins"
+}
+
+test_ds_pytest_and_ruff() {
+    local project_dir="$1"
+    local service_name="$2"
+    echo "   Running pytest and ruff inside the container..."
+    cd "$project_dir"
+    docker compose run --rm "$service_name" python -m pytest tests/ -q
+    docker compose run --rm "$service_name" ruff check .
+    echo "   ✓ pytest and ruff check passed"
+}
+
+test_ds_run_fails_with_not_implemented() {
+    local project_dir="$1"
+    local service_name="$2"
+    echo "   Running the pipeline against the unimplemented data layer..."
+    cd "$project_dir"
+    local out
+    out=$(docker compose run --rm "$service_name" python scripts/predict_and_evaluate.py --strategy ExampleStrategy 2>&1) && {
+        echo "   ✗ predict_and_evaluate.py succeeded but data.py is a stub"
+        return 1
+    }
+    if ! echo "$out" | grep -q "NotImplementedError"; then
+        echo "   ✗ expected NotImplementedError from data.py, got:"
+        echo "$out" | tail -5
+        return 1
+    fi
+    if [ -d "data/output/ExampleStrategy" ]; then
+        echo "   ✗ a run directory was created even though inference never ran"
+        return 1
+    fi
+    echo "   ✓ pipeline fails cleanly with NotImplementedError before writing anything"
 }
 
 test_precommit() {
