@@ -1,7 +1,10 @@
 node_modules/
 dist/
-public/data/*.parquet
-public/data/*.parquet.tmp
+# Undo the project-root lib/ and data/ ignores: these dirs hold dashboard code
+!data/
+!src/lib/
+public/data/*
+!public/data/README.md
 .env
 playwright-report/
 test-results/

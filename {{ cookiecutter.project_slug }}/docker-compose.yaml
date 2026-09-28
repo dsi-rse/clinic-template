@@ -18,11 +18,15 @@ services:
   dashboard:
     image: node:22-slim
     volumes:
+      # node_modules lands on the host so VS Code (host or attached) gets types.
+      # It holds Linux binaries: run npm via `make dashboard-*`, not on the host.
       - ./dashboard:/app
-      - dashboard_node_modules:/app/node_modules
     ports:
       - "5173:5173"
     working_dir: /app
+    # profile keeps the devcontainer (which starts every service) off port
+    # 5173; `docker compose run dashboard ...` activates it automatically
+    profiles: ["dashboard"]
     command: sh -c "npm install && npm run dev -- --host"
     stdin_open: true
     tty: true
@@ -36,7 +40,3 @@ services:
     profiles: ["tools"]
     command: python3 scripts/pull_data.py
   {% endif %}
-{% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}
-volumes:
-  dashboard_node_modules:
-{% endif %}

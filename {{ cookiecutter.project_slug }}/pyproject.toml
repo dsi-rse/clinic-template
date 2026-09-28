@@ -16,7 +16,7 @@ dependencies = [
   "tqdm~=4.67",{% endif %}
   {% if cookiecutter.data_dir != 'none' %}"python-dotenv~=1.0.0",{% endif %}
   {% if cookiecutter.cluster == 'yes' %}"submitit~=1.4",{% endif %}
-  {% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}"pyarrow~=18.0",{% endif %}
+  {% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}"pyarrow>=18",{% endif %}
 ]
 
 [dependency-groups]

@@ -8,8 +8,8 @@ use_docker = "{{ cookiecutter.docker }}" == "yes"
 use_data_dir = "{{ cookiecutter.data_dir }}" != "none"
 use_github_data_dir = "{{ cookiecutter.data_dir }}" == "github"
 examples = "{{ cookiecutter.examples }}"
-keep_bsd3 = f"{{ cookiecutter.bsd }}" == "yes"
-use_annotations = f"{{ cookiecutter.ann }}" == "yes"
+keep_bsd3 = "{{ cookiecutter.bsd }}" == "yes"
+use_annotations = "{{ cookiecutter.ann }}" == "yes"
 use_data_science = examples in ("data-science", "data-science-and-dashboard")
 use_dashboard = examples in ("dashboard", "data-science-and-dashboard")
 
@@ -62,9 +62,14 @@ for doc in ("PROJECT_SETUP.md", "TUTORIAL.md"):
     if not use_data_science and not use_dashboard:
         os.remove(doc)
         continue
-    # Each Jinja block tag leaves an empty line behind; squash the runs
+    # Each Jinja block tag leaves an empty line behind; squash the runs, but
+    # not inside ``` fences (odd pieces), where blank lines are code
     with open(doc) as f:
-        text = re.sub(r"\n{3,}", "\n\n", f.read()).strip("\n") + "\n"
+        parts = re.split(r"(?m)^(?=[ \t]*```)", f.read())
+    text = "".join(
+        p if i % 2 else re.sub(r"\n{3,}", "\n\n", p) for i, p in enumerate(parts)
+    )
+    text = text.strip("\n") + "\n"
     with open(doc, "w") as f:
         f.write(text)
 
