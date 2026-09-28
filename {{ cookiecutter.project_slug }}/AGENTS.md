@@ -13,5 +13,7 @@ Other instructions:
 - Do not change AGENTS.md unless explicitly asked to.
 - Do not change docs/PYTHON_DEVELOPMENT_GUIDELINES.md unless explicitly asked to.
 - Do not change linting rules unless explicitly asked to.
+- Use git and GitHub in ways that are simple, transparent, and in close collaboration with the user. Before any git operation, say which branch you are on. After committing or pushing, say what was committed and where, so students always know what is on GitHub and what is only local. Avoid using worktrees, stashes, or history rewriting, since these are mechanisms that will not be transparent to students and could lead to confusion.
+- Do not stash, reset, or discard changes to get unblocked; ask the student what they want to keep.
 - Sign your commits as Claude
 - If you post on GitHub (issues, comments, etc), put your comment in a collapsed block like: <details><summary>Claude: {one-line summary of comment}</summary>{your comment}</details>

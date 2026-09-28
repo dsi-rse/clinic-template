@@ -9,6 +9,9 @@
 ## VSCode
 .vscode
 
+## Claude Code (shared settings are tracked; personal overrides are not)
+.claude/settings.local.json
+
 ## Mac
 .DS_Store
 Desktop.ini

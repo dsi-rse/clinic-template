@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run --with jinja2 python -c ' *)",
+      "Read(//Users/dhjacobson/GitHub/clinic-2026-accountability-counsel/src/ac_eligibility/framework/**)",
+      "Read(//Users/dhjacobson/GitHub/clinic-2026-accountability-counsel/src/ac_eligibility/evaluators/**)"
+    ]
+  }
+}
