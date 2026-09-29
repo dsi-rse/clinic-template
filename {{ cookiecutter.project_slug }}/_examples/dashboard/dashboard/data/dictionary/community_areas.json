@@ -1,0 +1,143 @@
+{
+  "name": "community_areas",
+  "description": "Chicago's 77 community areas with 2008-2012 census socioeconomic indicators. Percent columns are 0-100; hardship_index is a 1-98 composite (higher = more hardship). Sources: Chicago Data Portal igwz-8jzy (boundaries) + kn9c-c2s2 (indicators).",
+  "row_count": 77,
+  "columns": {
+    "area_num": {
+      "dtype": "int64",
+      "nulls": 0,
+      "n_unique": 77,
+      "min": 1.0,
+      "max": 77.0,
+      "samples": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "name": {
+      "dtype": "str",
+      "nulls": 0,
+      "n_unique": 77,
+      "min": "Albany Park",
+      "max": "Woodlawn",
+      "samples": [
+        "Rogers Park",
+        "West Ridge",
+        "Uptown",
+        "Lincoln Square",
+        "North Center"
+      ]
+    },
+    "geometry": {
+      "dtype": "geometry (WKB, EPSG:4326 MultiPolygon)",
+      "nulls": 0,
+      "n_unique": 77
+    },
+    "pct_housing_crowded": {
+      "dtype": "float64",
+      "nulls": 0,
+      "n_unique": 56,
+      "min": 0.3,
+      "max": 15.8,
+      "samples": [
+        7.7,
+        7.8,
+        3.8,
+        3.4,
+        0.3
+      ]
+    },
+    "pct_below_poverty": {
+      "dtype": "float64",
+      "nulls": 0,
+      "n_unique": 67,
+      "min": 3.3,
+      "max": 56.5,
+      "samples": [
+        23.6,
+        17.2,
+        24.0,
+        10.9,
+        7.5
+      ]
+    },
+    "pct_unemployed": {
+      "dtype": "float64",
+      "nulls": 0,
+      "n_unique": 66,
+      "min": 4.7,
+      "max": 35.9,
+      "samples": [
+        8.7,
+        8.8,
+        8.9,
+        8.2,
+        5.2
+      ]
+    },
+    "pct_no_hs_diploma": {
+      "dtype": "float64",
+      "nulls": 0,
+      "n_unique": 69,
+      "min": 2.5,
+      "max": 54.8,
+      "samples": [
+        18.2,
+        20.8,
+        11.8,
+        13.4,
+        4.5
+      ]
+    },
+    "pct_dependent_age": {
+      "dtype": "float64",
+      "nulls": 0,
+      "n_unique": 66,
+      "min": 13.5,
+      "max": 51.5,
+      "samples": [
+        27.5,
+        38.5,
+        22.2,
+        25.5,
+        26.2
+      ]
+    },
+    "per_capita_income": {
+      "dtype": "float64",
+      "nulls": 0,
+      "n_unique": 77,
+      "min": 8201.0,
+      "max": 88669.0,
+      "samples": [
+        23939.0,
+        23040.0,
+        35787.0,
+        37524.0,
+        57123.0
+      ]
+    },
+    "hardship_index": {
+      "dtype": "float64",
+      "nulls": 0,
+      "n_unique": 77,
+      "min": 1.0,
+      "max": 98.0,
+      "samples": [
+        39.0,
+        46.0,
+        20.0,
+        17.0,
+        6.0
+      ]
+    },
+    "geometry_geojson": {
+      "dtype": "str (GeoJSON geometry, for MapLibre)",
+      "nulls": 0,
+      "n_unique": 77
+    }
+  }
+}
