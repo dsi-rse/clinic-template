@@ -14,14 +14,9 @@ Run `make dashboard-data` to populate this directory.
 
 ## Size limit
 
-Total parquet in this directory must stay **under 150 MB**, and no single file
-over **25 MiB** (Cloudflare Pages rejects larger deploy assets).  The pull
-script enforces both and exits non-zero on a breach.  CI also checks before
-every build.
+Total parquet in this directory must stay **under 150 MB**, and no single file over **25 MiB** (Cloudflare Pages rejects larger deploy assets).  The pull script enforces both and exits non-zero on a breach.  CI also checks before every build.
 
-Over budget?  In order: drop columns no query uses, pre-aggregate to the grain
-your charts actually plot, use zstd compression, simplify geometry, and only
-sample rows as a last resort (sampling makes every number wrong-by-sampling).
+Over budget?  In order: drop columns no query uses, pre-aggregate to the grain your charts actually plot, use zstd compression, simplify geometry, and only sample rows as a last resort (sampling makes every number wrong-by-sampling).
 
 ## How to add a dataset
 
@@ -33,13 +28,8 @@ sample rows as a last resort (sampling makes every number wrong-by-sampling).
 2. Upload to Box, get the static link, add it to `data.manifest.json`.
 3. Run `make dashboard-data` to pull it locally.
 
-Each entry in `data.manifest.json` is registered as a DuckDB view named after
-its `name`.  A file that only exists locally so far still needs an entry — use
-an empty URL (`{ "name": "my_dataset", "url": "" }`; `pull_data.py` skips it)
-and it can be queried with `SELECT * FROM my_dataset`.
+Each entry in `data.manifest.json` is registered as a DuckDB view named after its `name`.  A file that only exists locally so far still needs an entry — use an empty URL (`{ "name": "my_dataset", "url": "" }`; `pull_data.py` skips it) and it can be queried with `SELECT * FROM my_dataset`.
 
 ## .gitignore
 
-Parquet files are git-ignored.  Do not commit large datasets.
-The file `data.manifest.json` and `data/dictionary/` entries are committed
-instead — that is how collaborators reproduce the same data locally.
+Parquet files are git-ignored.  Do not commit large datasets.  The file `data.manifest.json` and `data/dictionary/` entries are committed instead — that is how collaborators reproduce the same data locally.

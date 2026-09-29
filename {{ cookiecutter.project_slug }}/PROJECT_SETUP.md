@@ -161,7 +161,7 @@ Then go to **Actions → Dashboard CI/CD → Run workflow**, run it from `main`,
 https://{{ cookiecutter.project_slug }}-dashboard.pages.dev
 ```
 
-From now on every push to `main` that touches `dashboard/` deploys.
+From now on every push to `main` that touches `dashboard/` deploys.  Pull requests that touch `dashboard/` get a preview deploy, and the workflow comments the preview link on the PR.  When the PR is closed or merged, the workflow deletes the preview.  PRs from forks don't get previews, because GitHub doesn't give them the secrets.
 
 #### Troubleshooting
 
