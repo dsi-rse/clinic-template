@@ -495,7 +495,7 @@ This writes `dashboard/public/data/results.parquet` and a data dictionary to `da
 
 Then, in a terminal on your machine (not the container shell from Part 1), run `make dashboard-dev`, open the **SQL** tab, and query it: `SELECT * FROM results LIMIT 10`.
 
-The parquet is git-ignored, so teammates and CI won't see it yet.  Ask your mentor to upload it to Box and fill in the `url` (project-root `PROJECT_SETUP.md`, Dashboard step 4).  After that, `make dashboard-data` pulls it for everyone.
+The parquet is git-ignored, so teammates and CI won't see it yet.  Ask your mentor to upload it to Box and fill in the `url` (project-root `PROJECT_SETUP.md`, Dashboard step 5).  After that, `make dashboard-data` pulls it for everyone.
 
 ---
 
