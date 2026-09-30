@@ -14,3 +14,29 @@ services:
     # At least one of stdin_open or tty is required to make devcontainer work
     stdin_open: true
     tty: true
+  {% if cookiecutter.examples in ['dashboard', 'data-science-and-dashboard'] %}
+  dashboard:
+    image: node:22-slim
+    volumes:
+      # node_modules lands on the host so VS Code (host or attached) gets types.
+      # It holds Linux binaries: run npm via `make dashboard-*`, not on the host.
+      - ./dashboard:/app
+    ports:
+      - "5173:5173"
+    working_dir: /app
+    # profile keeps the devcontainer (which starts every service) off port
+    # 5173; `docker compose run dashboard ...` activates it automatically
+    profiles: ["dashboard"]
+    command: sh -c "npm install && npm run dev -- --host"
+    stdin_open: true
+    tty: true
+  dashboard-data:
+    image: python:3.12-slim
+    volumes:
+      - ./dashboard:/app
+    working_dir: /app
+    # profile keeps this one-shot job out of `docker compose up`;
+    # `docker compose run dashboard-data` activates it automatically
+    profiles: ["tools"]
+    command: python3 scripts/pull_data.py
+  {% endif %}

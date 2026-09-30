@@ -8,7 +8,7 @@ import sys
 data_dir = "{{ cookiecutter.data_dir }}"
 examples = "{{ cookiecutter.examples }}"
 
-if examples == "data-science" and data_dir == "none":
+if examples in ("data-science", "data-science-and-dashboard") and data_dir == "none":
     print(
         "ERROR: The data-science scaffold reads and writes data via DATA_DIR, "
         "so it requires a data directory. "
