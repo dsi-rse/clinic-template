@@ -155,6 +155,7 @@ set +e
     # make sure the image still resolves and the module imports.
     build_docker "$PROJECT_DIR"
     test_source_import "$PROJECT_DIR" "$PROJECT_SLUG" "utils.dashboard_export"
+    test_ds_pytest_and_ruff "$PROJECT_DIR" "$PROJECT_SLUG"
 
     cd "$PROJECT_DIR"
     test_root_docs "Building and Running Your First Strategy" "Data science scaffold"
@@ -175,7 +176,7 @@ set +e
         echo "   ✗ _examples/ staging directory was not removed"
         exit 1
     fi
-    for f in "dashboard/index.html" "src/utils/dashboard_export.py" "src/utils/io.py"; do
+    for f in "dashboard/index.html" "src/utils/dashboard_export.py" "src/utils/data.py" "scripts/predict_and_evaluate.py"; do
         if [ ! -f "$f" ]; then
             echo "   ✗ Expected file not found: $f"
             exit 1

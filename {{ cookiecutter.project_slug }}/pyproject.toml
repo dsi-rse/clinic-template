@@ -10,9 +10,7 @@ dependencies = [
   # project packages
   "numpy~=2.2",
   "pandas~=2.2",
-  {% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}"click~=8.1",
-  "matplotlib~=3.9",
-  "seaborn~=0.13",
+  {% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}"matplotlib~=3.9",
   "tqdm~=4.67",{% endif %}
   {% if cookiecutter.data_dir != 'none' %}"python-dotenv~=1.0.0",{% endif %}
   {% if cookiecutter.cluster == 'yes' %}"submitit~=1.4",{% endif %}
@@ -28,11 +26,6 @@ dev = [
   "jupyterlab~=4.0.0",
   "ipykernel~=6.16",
 ]
-
-{% if cookiecutter.examples in ['data-science', 'data-science-and-dashboard'] %}
-[project.scripts]
-{{ cookiecutter.project_slug }} = "{{ cookiecutter.code_directory }}.cli:cli"
-{% endif %}
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -61,6 +54,7 @@ extend-select = [
 
 ignore = [
   "D415",   # allow first line of doctstrings to end without punctuation
+  "ANN101", # missing type on self (deprecated in newer ruff, still enforced by the pinned version)
   "ANN002", # missing type on *args
   "ANN003", # missing type on **kwargs
   "B905",   # won't work on python <3.10
@@ -70,5 +64,17 @@ ignore = [
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+  "D",        # docstrings are not required in tests
+  "ANN",      # type hints are not required in tests
+  "PLR2004",  # magic values are fine in tests
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["{{ cookiecutter.code_directory }}"]
+
 [tool.pytest.ini_options]
 python_files = "test_*.py"
+# lets tests import the scripts in scripts/ as modules
+pythonpath = ["scripts"]

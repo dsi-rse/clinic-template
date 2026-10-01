@@ -1,40 +1,48 @@
-"""Evaluator for binary or multi-class classification tasks."""
-from typing import Any
+"""An evaluator for label predictions that also draws a confusion matrix."""
 
 import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
 
-from {{ cookiecutter.code_directory }}.evaluation import AbstractEvaluator, EvaluationStatus
+from {{ cookiecutter.code_directory }}.framework.base import Evaluator
+from {{ cookiecutter.code_directory }}.types import ExpectedOutput, Prediction
 
 
-class ClassifierEvaluator(AbstractEvaluator):
-    """Evaluator for classification tasks. Produces a confusion matrix plot."""
+class ClassifierEvaluator(Evaluator):
+    """Compare the predicted ``label`` to the expected one and plot a confusion matrix.
 
-    def evaluate_single_output(self, predicted: Any, actual: Any) -> dict[str, Any]:
-        """Compare a single predicted label against the actual label."""
+    This is an example of an evaluator with a ``make_plots`` method. Per item
+    it records the predicted and actual labels and whether they match; the
+    plot counts how often each (actual, predicted) pair occurred.
+
+    TODO: replace this with an evaluator that fits your project.
+    """
+
+    def evaluate_single_output(
+        self, predicted: Prediction, expected: ExpectedOutput
+    ) -> dict[str, object]:
+        """Predicted label, actual label, and whether they match."""
         return {
-            "predicted": predicted,
-            "actual": actual,
-            "is_correct": predicted == actual,
+            "predicted": predicted["label"],
+            "actual": expected["label"],
+            "is_correct": predicted["label"] == expected["label"],
         }
 
-    def make_plots(self, evaluation_results: dict[str, Any]) -> dict[str, plt.Figure]:
-        """Return a confusion matrix heatmap for all evaluated outputs."""
-        evaluated = [
-            v for v in evaluation_results.values()
-            if v["status"] == EvaluationStatus.INCLUDED
-        ]
-        if not evaluated:
-            return {}
-
-        df = pd.DataFrame(evaluated)
-        matrix = df.groupby(["actual", "predicted"]).size().unstack(fill_value=0)
+    def make_plots(self, results: dict) -> dict[str, plt.Figure]:
+        """A confusion matrix over every evaluated item, saved as ``confusion_matrix.png``."""
+        rows = [r for r in results["per_item"].values() if r["status"] == "evaluated"]
+        labels = sorted(
+            {r["actual"] for r in rows} | {r["predicted"] for r in rows}, key=str
+        )
+        counts = [[0] * len(labels) for _ in labels]
+        for r in rows:
+            counts[labels.index(r["actual"])][labels.index(r["predicted"])] += 1
 
         fig, ax = plt.subplots()
-        sns.heatmap(matrix, annot=True, fmt="d", cmap="Blues", ax=ax)
+        ax.imshow(counts, cmap="Blues")
+        for i in range(len(labels)):
+            for j in range(len(labels)):
+                ax.text(j, i, str(counts[i][j]), ha="center", va="center")
+        ax.set_xticks(range(len(labels)), [str(x) for x in labels])
+        ax.set_yticks(range(len(labels)), [str(x) for x in labels])
         ax.set_xlabel("Predicted")
         ax.set_ylabel("Actual")
-        ax.set_title("Confusion Matrix")
-        fig.tight_layout()
         return {"confusion_matrix": fig}

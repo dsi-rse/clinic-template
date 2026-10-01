@@ -1,14 +1,14 @@
 #!/bin/bash
-# Test: Cluster configuration (cluster=yes) with the data-science scaffold
+# Test: Pre-commit hooks pass on the data-science scaffold (ann=yes)
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/../lib/helpers.sh"
 
-TEST_NAME="Cluster Configuration (cluster=yes)"
-PROJECT_NAME="Test Cluster"
-PROJECT_SLUG="test-cluster"
+TEST_NAME="Pre-commit Hooks (data-science scaffold)"
+PROJECT_NAME="Test Precommit Data Science"
+PROJECT_SLUG="test-precommit-data-science"
 PROJECT_DIR="$TEST_DIR/$PROJECT_SLUG"
 
 print_test_header "$TEST_NAME"
@@ -26,18 +26,14 @@ set +e
     create_project "$PROJECT_NAME" \
         docker="yes" \
         data_dir="local" \
-        cluster="yes" \
+        cluster="no" \
         examples="data-science" \
         bsd="yes" \
-        ann="no"
+        ann="yes"
     
     build_docker "$PROJECT_DIR"
-    test_python_version "$PROJECT_DIR" "$PROJECT_SLUG"
-    test_package_imports "$PROJECT_DIR" "$PROJECT_SLUG"
-    test_source_import "$PROJECT_DIR" "$PROJECT_SLUG" "utils"
-    test_cluster_config "$PROJECT_DIR" "$PROJECT_SLUG"
-    test_examples_data_science "$PROJECT_DIR" "$PROJECT_SLUG" "utils"
-    test_ds_scripts_help "$PROJECT_DIR" "$PROJECT_SLUG"
+    test_precommit "$PROJECT_DIR" "$PROJECT_SLUG"
+    test_ds_pytest_and_ruff "$PROJECT_DIR" "$PROJECT_SLUG"
     
     print_test_success "$TEST_NAME"
 )

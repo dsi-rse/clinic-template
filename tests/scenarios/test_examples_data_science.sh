@@ -33,6 +33,9 @@ set +e
 
     build_docker "$PROJECT_DIR"
     test_examples_data_science "$PROJECT_DIR" "$PROJECT_SLUG" "utils"
+    test_ds_scripts_help "$PROJECT_DIR" "$PROJECT_SLUG"
+    test_ds_pytest_and_ruff "$PROJECT_DIR" "$PROJECT_SLUG"
+    test_ds_run_fails_with_not_implemented "$PROJECT_DIR" "$PROJECT_SLUG"
 
     print_test_success "$TEST_NAME"
 )

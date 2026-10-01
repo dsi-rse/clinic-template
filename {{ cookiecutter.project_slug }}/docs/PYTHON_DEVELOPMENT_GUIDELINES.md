@@ -13,7 +13,7 @@
 - Runnable scripts live in scripts/.
 - Runnable scripts should use argparse.
 - Core functionality that is needed for runnable scripts should be imported from {package-name}.
-- All scripts should be documented in README.md.
+- All scripts should be documented in scripts/README.md.
 - Scripts that users and developers may have to run regularly should be runnable via a `make` command, specified in the Makefile.
 
 ### Python notebooks
@@ -21,7 +21,7 @@
 - Core functionality that is needed for notebooks should be imported from {package-name}
 
 ### Data
-- Data should be read from and written to the directory specified in settings.DATA_DIR.
+- Data should be read from the directory specified in settings.DATA_DIR. Generated results are written to DATA_DIR/output/.
   - DATA_DIR should have a documented and well-organized structure that clearly distinguishes different types of files.
   - Runnable scripts can take data input and output paths as arguments, but should have defaults that are standard locations in DATA_DIR.
 

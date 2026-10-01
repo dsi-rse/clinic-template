@@ -1,6 +1,6 @@
 # Makefile for clinic-template development
 
-.PHONY: test test-basic test-local-data test-cluster test-precommit test-examples-data-science test-dashboard clean help
+.PHONY: test test-basic test-local-data test-cluster test-precommit test-precommit-data-science test-examples-data-science test-dashboard clean help
 
 help:
 	@echo "Available targets:"
@@ -9,13 +9,14 @@ help:
 	@echo "  test-local-data - Test local data directory config"
 	@echo "  test-cluster    - Test cluster configuration"
 	@echo "  test-precommit  - Test pre-commit hooks"
+	@echo "  test-precommit-data-science - Test pre-commit hooks and pytest on the data-science scaffold"
 	@echo "  test-examples-data-science - Test data-science examples scaffold"
 	@echo "  test-dashboard  - Test dashboard scaffold (yes/no generation, no-Jinja-leak, token replacement)"
 	@echo "  clean           - Remove test artifacts"
 	@echo "  help            - Show this help message"
 
 # Run all tests
-test: test-basic test-local-data test-cluster test-precommit test-examples-data-science test-dashboard
+test: test-basic test-local-data test-cluster test-precommit test-precommit-data-science test-examples-data-science test-dashboard
 	@echo ""
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "ALL TESTS PASSED"
@@ -37,6 +38,10 @@ test-cluster:
 test-precommit:
 	@chmod +x tests/scenarios/test_precommit.sh
 	@./tests/scenarios/test_precommit.sh
+
+test-precommit-data-science:
+	@chmod +x tests/scenarios/test_precommit_data_science.sh
+	@./tests/scenarios/test_precommit_data_science.sh
 
 test-examples-data-science:
 	@chmod +x tests/scenarios/test_examples_data_science.sh
