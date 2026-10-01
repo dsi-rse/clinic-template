@@ -7,7 +7,7 @@ Also note:
 - There will be multiple students working in this repo, which may lead to divergence of structure and duplication of functionality. 
 
 For Python development, follow these guidelines and encourage students to follow them:
-- @PYTHON_DEVELOPMENT_GUIDELINES.md
+- @docs/PYTHON_DEVELOPMENT_GUIDELINES.md
 
 Other instructions:
 - Do not change AGENTS.md unless explicitly asked to.
@@ -15,3 +15,11 @@ Other instructions:
 - Do not change linting rules unless explcitly asked to.
 - Sign your commits as Claude
 - If you post on GitHub (issues, comments, etc), put your comment in a collapsed block like: <details><summary>Claude: {one-line summary of comment}</summary>{your comment}</details>
+
+## Local Preferences
+
+If `agents.local.md` exists in the repo root, read it after this file.
+
+`agents.local.md` is for personal preferences and durable student-specific guidance. It supplements the shared course rules above and should not be committed.
+
+Students can copy `agents.local.example.md` to `agents.local.md` and customize it for their own checkout.
