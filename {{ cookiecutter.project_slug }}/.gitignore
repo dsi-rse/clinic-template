@@ -143,3 +143,6 @@ venv.bak/
 # data directory
 data/
 {% endif %}
+
+# Personal agent instructions (keep the shared example)
+/agents.local.md
