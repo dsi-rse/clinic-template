@@ -144,7 +144,19 @@ npx wrangler pages deploy /tmp/cf-test --project-name={{ cookiecutter.project_sl
 - `--production-branch=main` is required.  CI deploys with `--branch=main`, and wrangler's default production branch is `production`, so without the flag every deploy lands on a preview URL and the public URL never updates.
 - The test deploy goes to a preview URL (`local-test.{{ cookiecutter.project_slug }}-dashboard.pages.dev`).  If it succeeds, the token works.
 
-### 3. Add GitHub secrets and run CI
+### 3. Protect the workflow files
+
+Do this before the token goes into GitHub.  The token can edit every Pages project in the DSI account, not just this one.  A pull request runs the workflow file from its own branch, secrets included, before anyone reviews it.  So anyone who can push a branch could edit the workflow to delete or overwrite other projects' sites.  A push ruleset blocks those edits:
+
+1. In the GitHub repository go to **Settings → Rules → Rulesets → New ruleset → New push ruleset**.
+2. Name it `protect-workflows` and set **Enforcement status** to **Active**.
+3. Under **Bypass list**, add yourself or your mentor team.  Don't add any role or team that students are in.
+4. Turn on **Restrict file paths** and add `.github/workflows/**`.
+5. Click **Create**.
+
+Now any push that adds or changes a file under `.github/workflows/`, on any branch, is rejected unless it comes from someone on the bypass list.  Give students the **Write** role, not **Admin**, because admins can turn the ruleset off.  Push rulesets only exist for private and internal repositories.
+
+### 4. Add GitHub secrets and run CI
 
 In the GitHub repository go to **Settings → Secrets and variables → Actions** and add the same values you just tested:
 
@@ -173,7 +185,7 @@ From now on every push to `main` that touches `dashboard/` deploys.  Pull reques
 | "Project not found" | Name mismatch, or project is in a different account | Check `--project-name` in `.github/workflows/dashboard.workflow.yml` and `CLOUDFLARE_ACCOUNT_ID` |
 | You created a Workers project by mistake | Dashboard wizard default | Delete it and run step 2 |
 
-### 4. Add datasets via Box
+### 5. Add datasets via Box
 
 > **Everything in `public/data/` is published to the open internet.**  The build copies it into the deployed site at a guessable public URL.  Only add datasets that are aggregated or de-identified enough to be world-readable — never partner-restricted data.
 
