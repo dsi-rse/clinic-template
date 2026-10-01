@@ -9,7 +9,7 @@ assignees: ''
 
 ## Context
 
-One or two sentences on why this week's tasks matter for the project goals.
+Short description of the task and how it relates to the project goals. 
 
 ## Acceptance Criteria
 
